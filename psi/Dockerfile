@@ -59,7 +59,6 @@ RUN  /bin/bash -c "set -ex; \
   cp -r /var/www/PSI_Mobile/dist/static/* /var/www/html/static; \
   mv -f /init_dbconf.php /var/www/html/web/Application/Common/Conf/config.php; \
   chmod -R 777 /var/www/html; \
-  mkdir -p /psibak; \
   npm cache clean --force; \
   apt autoclean -y; \
   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/www/html/index.html"
