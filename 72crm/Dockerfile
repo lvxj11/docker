@@ -12,6 +12,7 @@ RUN  /bin/bash -c "set -ex; \
               wget screen git; \
   chmod 755 /init_*.sh; \
   tar -zxvf /init_lamp.tar.gz; \
+  chmod -R 755 /lamp; \
   cd /lamp; \
   ./lamp.sh --apache_option 1 --db_option 14 --php_option 1 --php_extensions memcached --kodexplorer_option 1; \
   cd /; \
@@ -22,7 +23,7 @@ RUN  /bin/bash -c "set -ex; \
   mv /data/www/lamp /data/www/default/lamp; \
   chmod -R 777 /data/www/default; \
   apt autoclean -y; \
-  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/www/html/index.html"
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* "
 
 #其它配置
 #VOLUME /72crm
