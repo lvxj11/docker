@@ -122,6 +122,7 @@ ENV ADMIN_PASSWORD=admin
 RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf" \
     && cd /home/frappe \
     && bench init --skip-redis-config-generation frappe-bench \
+    && cd /home/frappe/frappe-bench \
     && bench get-app erpnext https://github.com/frappe/erpnext \
     && bench config dns_multitenant on
 
