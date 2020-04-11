@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  frappe:
+    image: test/frappe:12
+    restart: on-failure
+    environment:
+      - MARIADB_ROOT_PASSWORD=Pass0129
+      - ADMIN_PASSWORD=admin
+    depends_on:
+      - redis
+      - mariadb
+    links:
+      - redis
+      - mariadb
+    volumes:
+      - frappe-bench-vol:/home/frappe/frappe-bench:rw
+
+  redis:
+    image: redis:5
+    restart: on-failure
+    volumes:
+      - redis-vol:/data
+
+  mariadb:
+    image: mariadb:10.3
+    restart: on-failure
+    environment:
+      - MYSQL_ROOT_PASSWORD=Pass0129
+    volumes:
+      - ./frappe-mariadb.cnf:/etc/mysql/conf.d/frappe.cnf
+      - mariadb-vol:/var/lib/mysql
+
+volumes:
+  mariadb-vol:
+  redis-vol:
+  frappe-bench-vol:
