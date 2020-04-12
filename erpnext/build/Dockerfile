@@ -128,10 +128,10 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && bench get-app erpnext https://github.com/frappe/erpnext \
     && bench config dns_multitenant on \
     && sudo chmod -R 755 /frappe-config/*.sh \
-    && ln -s /frappe-config/add-site.sh /add-site.sh \
-    && ln -s /frappe-config/common_site_config.json /home/frappe/frappe-bench/common_site_config.json \
-    && ln -s /frappe-config/frappe-nginx.conf /etc/nginx/sites-enabled/default \
-    && ln -s /frappe-config/init-start.sh /init-start.sh
+    && sudo ln -s /frappe-config/add-site.sh /add-site.sh \
+    && sudo ln -s /frappe-config/common_site_config.json /home/frappe/frappe-bench/common_site_config.json \
+    && sudo ln -s /frappe-config/frappe-nginx.conf /etc/nginx/sites-enabled/default \
+    && sudo ln -s /frappe-config/init-start.sh /init-start.sh
 
 EXPOSE 80 443 8000 9000 6787
 
