@@ -130,7 +130,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && sudo chmod -R 755 /frappe-config/*.sh \
     && sudo ln -s /frappe-config/add-site.sh /add-site.sh \
     && sudo ln -s /frappe-config/common_site_config.json /home/frappe/frappe-bench/common_site_config.json \
-    && sudo rm -f /etc/nginx/sites-enabled/default
+    && sudo rm -f /etc/nginx/sites-enabled/default \
     && sudo ln -s /frappe-config/frappe-nginx.conf /etc/nginx/sites-enabled/default \
     && sudo ln -s /frappe-config/init-start.sh /init-start.sh
 
