@@ -141,4 +141,5 @@ VOLUME /home/frappe/frappe-bench
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/init-start.sh"]
+ENTRYPOINT /init-start.sh
+#CMD ["/init-start.sh"]
