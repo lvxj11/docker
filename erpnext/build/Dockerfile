@@ -123,9 +123,9 @@ COPY ./frappe-config /frappe-config
 
 RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf" \
     && cd /home/frappe \
-    && bench init --skip-redis-config-generation frappe-bench \
+    && bench init --frappe-branch version-12 --skip-redis-config-generation frappe-bench \
     && cd /home/frappe/frappe-bench \
-    && bench get-app erpnext https://github.com/frappe/erpnext \
+    && bench get-app --branch version-12 erpnext https://github.com/frappe/erpnext \
     && bench config dns_multitenant on \
     && sudo chmod -R 755 /frappe-config/*.sh \
     && sudo ln -s /frappe-config/add-site.sh /add-site.sh \
