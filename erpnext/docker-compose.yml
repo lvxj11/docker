@@ -2,11 +2,15 @@ version: '3'
 
 services:
   frappe:
-    image: test/frappe:12
+    image: lvxj11/erpnext
     restart: on-failure
     environment:
       - MARIADB_ROOT_PASSWORD=Pass0129
       - ADMIN_PASSWORD=admin
+    ports:
+      - "31010:80"
+      - "31011:443"
+      - "31012:8000"
     depends_on:
       - redis
       - mariadb
@@ -15,6 +19,7 @@ services:
       - mariadb
     volumes:
       - frappe-bench-vol:/home/frappe/frappe-bench:rw
+      - nginx-vol:/etc/nginx
 
   redis:
     image: redis:5
@@ -35,3 +40,4 @@ volumes:
   mariadb-vol:
   redis-vol:
   frappe-bench-vol:
+  nginx-vol:
