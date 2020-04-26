@@ -19,7 +19,7 @@ services:
       - mariadb
     volumes:
       - frappe-bench-vol:/home/frappe/frappe-bench:rw
-      - nginx-vol:/etc/nginx
+      - frappe-nginx-vol:/etc/nginx
 
   redis:
     image: redis:5
@@ -32,6 +32,8 @@ services:
     restart: on-failure
     environment:
       - MYSQL_ROOT_PASSWORD=Pass0129
+    ports:
+      - "31013:3306"
     volumes:
       - ./frappe-mariadb.cnf:/etc/mysql/conf.d/frappe.cnf
       - mariadb-vol:/var/lib/mysql
@@ -40,4 +42,4 @@ volumes:
   mariadb-vol:
   redis-vol:
   frappe-bench-vol:
-  nginx-vol:
+  frappe-nginx-vol:
