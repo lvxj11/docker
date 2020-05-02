@@ -1,5 +1,5 @@
 # Frappe Bench Dockerfile
-FROM bitnami/minideb:latest
+FROM bitnami/minideb:stretch
 LABEL author=frappé
 
 RUN install_packages \
