@@ -1,2 +1,2 @@
 #！/bin/bash
-docker exec -it erpnext_frappe_1 bash -c "add-site $1"
+docker exec -it erpnext_frappe_1 bash -c "/frappe-config/add-site.sh $1"

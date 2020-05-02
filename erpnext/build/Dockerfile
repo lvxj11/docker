@@ -126,13 +126,13 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && bench init --frappe-branch version-12 --skip-redis-config-generation frappe-bench \
     && cd /home/frappe/frappe-bench \
     && bench get-app --branch version-12 erpnext https://github.com/frappe/erpnext \
-    && bench config dns_multitenant on \
     && sudo chmod -R 777 /frappe-config/* \
     && sudo ln -s /frappe-config/add-site.sh /home/frappe/.local/bin/add-site \
     && sudo mv /home/frappe/frappe-bench/sites/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json.bak \
     && sudo cp -a /frappe-config/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json \
     && sudo rm -f /etc/nginx/sites-enabled/default \
-    && sudo cp -a /frappe-config/frappe-nginx.conf /etc/nginx/sites-enabled/default \
+    && sudo cp -a /frappe-config/frappe-nginx.conf /etc/nginx/sites-available/erpnext \
+    && sudo ln -s /etc/nginx/sites-available/erpnext /etc/nginx/sites-enabled/erpnext \
     && sudo ln -s /frappe-config/init-start.sh /init-start.sh
 
 EXPOSE 80 443 8000 9000 6787

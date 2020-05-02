@@ -11,6 +11,7 @@
     "redis_socketio": "redis://redis:6379",
     "restart_supervisor_on_update": false,
     "restart_systemd_on_update": false,
+    "dns_multitenant": true,
     "serve_default_site": true,
     "shallow_clone": true,
     "socketio_port": 9000,
