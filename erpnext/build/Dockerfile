@@ -1,5 +1,5 @@
 # Frappe Bench Dockerfile
-FROM bitnami/minideb:stretch
+FROM bitnami/minideb:buster
 LABEL author=frappé
 
 RUN install_packages \
@@ -88,14 +88,14 @@ ENV NODE_VERSION=12.16.1
 ENV NODE_VERSION_FRAPPEV11=10.19.0
 
 # Install nvm with node
-RUN wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh
-RUN chmod +x install.sh
-RUN ./install.sh
+RUN wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh \
+    && chmod +x install.sh \
+    && ./install.sh
 ENV NVM_DIR=/home/frappe/.nvm
 
 # Install node for Frappe V11, install yarn
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION_FRAPPEV11}
-RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION_FRAPPEV11} && npm install -g yarn
+# RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION_FRAPPEV11}
+# RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION_FRAPPEV11} && npm install -g yarn
 # Install node for latest frappe, set as default, install node
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}  && npm install -g yarn
