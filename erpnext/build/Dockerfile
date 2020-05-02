@@ -51,7 +51,9 @@ RUN install_packages \
     nginx
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
-  && dpkg-reconfigure --frontend=noninteractive locales
+  && dpkg-reconfigure --frontend=noninteractive locales \
+  && export LC_ALL=C.UTF-8 \
+  && export LANG=C.UTF-8
 
 # Install wkhtmltox correctly
 RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb
