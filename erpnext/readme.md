@@ -3,7 +3,7 @@
 1.下载“docker-compose.yml”和“frappe-mariadb.cnf”两个文件  
 2.在两个文件的同目录执行`docker-compose up -d`
 3.建立 site1.local 站点，可根据需要修改站点名称。运行前请自行确认容器名称并修改。  
-`docker exec -it erpnext_frappe_1 bash -c "add-site site1.local"`
+`docker exec -it erpnext_frappe_1 bash -c "add-site site1.local"`  
 4.用浏览器访问“http://服务器地址或域名:端口号”，初始管理员账号“administrator”密码“admin”。  
 端口号请查看或修改“docker-compose.yml”  
 
