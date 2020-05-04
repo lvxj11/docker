@@ -135,6 +135,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && sudo cp -a /frappe-config/frappe-nginx.conf /home/frappe/frappe-bench/config/nginx.conf \
     && sudo ln -s /home/frappe/frappe-bench/config/nginx.conf /etc/nginx/sites-enabled/nginx.conf \
     && sudo ln -s /frappe-config/add-site.sh /home/frappe/.local/bin/add-site \
+    && sudo ln -s /frappe-config/multi-site.sh /home/frappe/.local/bin/multi-site \
     && sudo ln -s /frappe-config/init-start.sh /init-start.sh
 
 EXPOSE 80 443 8000 9000 6787
