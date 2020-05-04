@@ -2,7 +2,7 @@ version: '3'
 
 services:
   frappe:
-    image: lvxj11/erpnext:V12
+    image: registry.cn-beijing.aliyuncs.com/lvxj11/erpnext:V12
     restart: on-failure
     environment:
       - MARIADB_ROOT_PASSWORD=Pass0129
