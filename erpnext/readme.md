@@ -19,4 +19,4 @@
 默认配置文件已开启DNS方式多站点，本次指令原理上是清空“currentsite.txt”文件取消默认站点的设置并重启容器，使多站点配置生效。  
 
 # 升级更新
-`docker exec -it erpnext_frappe_1 bash -c "cd ~/frappe-bench && bench update"`  
+`docker exec -it erpnext_frappe_1 bash -c "bench-update"`  
