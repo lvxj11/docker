@@ -131,7 +131,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && sudo mv /home/frappe/frappe-bench/sites/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json.bak \
     && sudo cp -a /frappe-config/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json \
     && sudo rm -f /etc/nginx/sites-enabled/default \
-    && sudo cp -a /frappe-config/frappe-nginx.conf /etc/nginx/sites-available/erpnext \
+    && sudo cp -a /frappe-config/default.conf /etc/nginx/sites-enabled/default.conf \
     && sudo cp -a /frappe-config/frappe-nginx.conf /home/frappe/frappe-bench/config/nginx.conf \
     && sudo ln -s /home/frappe/frappe-bench/config/nginx.conf /etc/nginx/sites-enabled/nginx.conf \
     && sudo ln -s /frappe-config/add-site.sh /home/frappe/.local/bin/add-site \
