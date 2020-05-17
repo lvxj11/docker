@@ -3,7 +3,7 @@ version: '3'
 services:
   frappe:
     image: registry.cn-beijing.aliyuncs.com/lvxj11/erpnext:V12
-    restart: on-failure
+    restart: unless-stopped
     environment:
       - MARIADB_ROOT_PASSWORD=Pass0129
       - ADMIN_PASSWORD=admin
@@ -23,13 +23,13 @@ services:
 
   redis:
     image: redis:5
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - redis-vol:/data
 
   mariadb:
     image: mariadb:10.3
-    restart: on-failure
+    restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=Pass0129
     ports:
