@@ -141,7 +141,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
 
 EXPOSE 80 443 8000 9000 6787
 
-VOLUME /home/frappe/frappe-bench
+VOLUME /home/frappe/frappe-bench/sites
 
 STOPSIGNAL SIGTERM
 
