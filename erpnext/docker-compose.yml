@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  frappe:
+  erpnext:
     image: registry.cn-beijing.aliyuncs.com/lvxj11/erpnext:V12
     restart: unless-stopped
     environment:
@@ -18,8 +18,8 @@ services:
       - redis
       - mariadb
     volumes:
-      - frappe-bench-vol:/home/frappe/frappe-bench:rw
-      - frappe-nginx-vol:/etc/nginx
+      - sites-vol:/home/frappe/frappe-bench/sites:rw
+      - nginx-config-vol:/etc/nginx
 
   redis:
     image: redis:5
@@ -41,5 +41,5 @@ services:
 volumes:
   mariadb-vol:
   redis-vol:
-  frappe-bench-vol:
-  frappe-nginx-vol:
+  sites-vol:
+  nginx-config-vol:
