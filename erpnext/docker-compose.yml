@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  erpnext:
+  frappe:
     image: registry.cn-beijing.aliyuncs.com/lvxj11/erpnext:V12
     restart: unless-stopped
     environment:
