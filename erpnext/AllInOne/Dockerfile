@@ -12,7 +12,7 @@ RUN apt update \
   && dpkg-reconfigure --frontend=noninteractive locales \
   && groupadd -g 1000 frappe \
   && useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe \
-  && echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+  && echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # 设置运行用户与目录
 USER frappe
@@ -21,7 +21,7 @@ WORKDIR /home/frappe
 # 下载脚本，修改脚本，运行安装脚本。
 RUN cd /home/frappe \
   && wget https://raw.githubusercontent.com/frappe/bench/develop/install.py \
-  && sudo sed -i -e 's/pass_set = True/pass_set = False/' install.py \
+  && sudo sed -i -e 's/pass_set = True/pass_set = False/' /home/frappe/install.py \
   && sudo python3 install.py --production --mysql-root-password Pass0129 --admin-password admin
 
 # 开放端口
