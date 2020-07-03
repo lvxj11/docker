@@ -20,6 +20,8 @@ WORKDIR /home/frappe
 
 # 下载脚本，修改脚本，运行安装脚本。
 RUN cd /home/frappe \
+  && export LANG=C.UTF-8 \
+  && export LC_ALL=C.UTF-8 \
   && wget https://raw.githubusercontent.com/frappe/bench/develop/install.py \
   && sudo sed -i -e 's/pass_set = True/pass_set = False/' /home/frappe/install.py \
   && sudo python3 install.py --production --mysql-root-password Pass0129 --admin-password admin
