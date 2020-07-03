@@ -7,7 +7,7 @@ RUN export LC_ALL=C.UTF-8 \
   && export LANG=C.UTF-8 \
   && apt update \
   && apt upgrade -y \
-  && apt install -y python3-minimal build-essential python3-setuptools wget \
+  && apt install -y python3-minimal build-essential python3-setuptools wget sudo \
   && adduser frappe \
   && usermod -aG sudo frappe \
   && su - frappe \
