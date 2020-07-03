@@ -6,10 +6,10 @@ LABEL author=lvxj11
 RUN apt update \
   && apt upgrade -y \
   && apt install -y locales cron curl wget vim sudo iputils-ping watch tree nano software-properties-common bash-completion python3-minimal build-essential python3-setuptools \
-  && export LANG=C.UTF-8 \
-  && export LC_ALL=C.UTF-8 \
   && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
   && dpkg-reconfigure --frontend=noninteractive locales \
+  && export LANG=C.UTF-8 \
+  && export LC_ALL=C.UTF-8 \
   && groupadd -g 1000 frappe \
   && useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe \
   && echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
