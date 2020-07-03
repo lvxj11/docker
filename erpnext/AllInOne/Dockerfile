@@ -5,7 +5,7 @@ LABEL author=lvxj11
 # 前期准备，设置环境语言安装必要软件，新建用户并添加sudo权限，切换到用户和目录运行安装脚本。
 RUN export LC_ALL=C.UTF-8 \
   && export LANG=C.UTF-8 \
-  && ape update \
+  && apt update \
   && apt upgrade -y \
   && apt install -y python3-minimum build-essential python3-setuptools wget \
   && adduser frappe \
