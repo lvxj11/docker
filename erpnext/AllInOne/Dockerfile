@@ -123,7 +123,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && cd /home/frappe \
     && install_packages redis-server mariadb-server \
     && nohup mysqld_safe & \
-    && sleep 3
+    && sleep 3 \
     && mysqladmin -u root password ${MARIADB_ROOT_PASSWORD} \
     && sudo cp -a /home/frappe/frappe-config/frappe-mariadb.cnf /etc/mysql/conf.d/frappe.cnf \
     && bench init --frappe-branch version-12 frappe-bench \
@@ -134,8 +134,7 @@ RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.c
     && sudo mv /home/frappe/frappe-bench/sites/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json.bak \
     && sudo cp -a /home/frappe/frappe-config/common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json \
     && sudo ln -s /home/frappe/frappe-config/init-start.sh /init-start.sh \
-    && bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password ${ADMIN_PASSWORD} site1.local \
-    
+    && bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password ${ADMIN_PASSWORD} site1.local
 
 EXPOSE 8000-8005 9000-9005 6787
 
