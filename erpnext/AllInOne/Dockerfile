@@ -124,7 +124,7 @@ COPY ./frappe-config /home/frappe/frappe-config
 # 安装并配置frappe
 RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf" \
     && cd /home/frappe \
-    && bash -c "sudo nohup mysqld_safe &" \
+    && bash -c "su -c nohup mysqld_safe &" \
     && service redis-server restart \
     && sleep 3 \
     && mysqladmin -u root password ${MARIADB_ROOT_PASSWORD} \
