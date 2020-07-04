@@ -49,7 +49,10 @@ RUN install_packages \
     python3-setuptools \
     python3-tk \
     python-virtualenv \
-    less
+    less \
+    # 安装redis-server mariadb-server
+    redis-server \
+    mariadb-server
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
   && dpkg-reconfigure --frontend=noninteractive locales
@@ -121,7 +124,6 @@ COPY ./frappe-config /home/frappe/frappe-config
 # 安装并配置frappe
 RUN bash -c "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf" \
     && cd /home/frappe \
-    && install_packages redis-server mariadb-server \
     && bash -c "nohup mysqld_safe &" \
     && sleep 3 \
     && mysqladmin -u root password ${MARIADB_ROOT_PASSWORD} \
