@@ -1,0 +1,433 @@
+{
+ "allow_events_in_timeline": 1,
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2013-04-10 11:45:37",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "organization_lead",
+  "lead_details",
+  "naming_series",
+  "lead_name",
+  "company_name",
+  "email_id",
+  "col_break123",
+  "lead_owner",
+  "status",
+  "gender",
+  "source",
+  "customer",
+  "campaign_name",
+  "image",
+  "section_break_12",
+  "contact_by",
+  "column_break_14",
+  "contact_date",
+  "ends_on",
+  "notes_section",
+  "notes",
+  "contact_info",
+  "address_desc",
+  "address_html",
+  "column_break2",
+  "contact_html",
+  "phone",
+  "salutation",
+  "mobile_no",
+  "fax",
+  "website",
+  "territory",
+  "more_info",
+  "type",
+  "market_segment",
+  "industry",
+  "request_type",
+  "column_break3",
+  "company",
+  "unsubscribed",
+  "blog_subscriber"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "organization_lead",
+   "fieldtype": "Check",
+   "label": "Lead is an Organization",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "lead_details",
+   "fieldtype": "Section Break",
+   "options": "fa fa-user"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "no_copy": 1,
+   "oldfieldname": "naming_series",
+   "oldfieldtype": "Select",
+   "options": "CRM-LEAD-.YYYY.-",
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "lead_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "label": "Person Name",
+   "oldfieldname": "lead_name",
+   "oldfieldtype": "Data",
+   "search_index": 1
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Organization Name",
+   "oldfieldname": "company_name",
+   "oldfieldtype": "Data"
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email Address",
+   "oldfieldname": "email_id",
+   "oldfieldtype": "Data",
+   "options": "Email",
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break123",
+   "fieldtype": "Column Break",
+   "width": "50%"
+  },
+  {
+   "default": "__user",
+   "fieldname": "lead_owner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lead Owner",
+   "oldfieldname": "lead_owner",
+   "oldfieldtype": "Link",
+   "options": "User",
+   "search_index": 1
+  },
+  {
+   "default": "Lead",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "oldfieldname": "status",
+   "oldfieldtype": "Select",
+   "options": "Lead\nOpen\nReplied\nOpportunity\nQuotation\nLost Quotation\nInterested\nConverted\nDo Not Contact",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Link",
+   "label": "Source",
+   "oldfieldname": "source",
+   "oldfieldtype": "Select",
+   "options": "Lead Source"
+  },
+  {
+   "depends_on": "eval:doc.source == 'Existing Customer'",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "From Customer",
+   "no_copy": 1,
+   "oldfieldname": "customer",
+   "oldfieldtype": "Link",
+   "options": "Customer"
+  },
+  {
+   "depends_on": "eval: doc.source==\"Campaign\"",
+   "fieldname": "campaign_name",
+   "fieldtype": "Link",
+   "label": "Campaign Name",
+   "oldfieldname": "campaign_name",
+   "oldfieldtype": "Link",
+   "options": "Campaign"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "section_break_12",
+   "fieldtype": "Section Break",
+   "label": "Follow Up"
+  },
+  {
+   "fieldname": "contact_by",
+   "fieldtype": "Link",
+   "label": "Next Contact By",
+   "oldfieldname": "contact_by",
+   "oldfieldtype": "Link",
+   "options": "User",
+   "width": "100px"
+  },
+  {
+   "fieldname": "column_break_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "contact_date",
+   "fieldtype": "Datetime",
+   "label": "Next Contact Date",
+   "no_copy": 1,
+   "oldfieldname": "contact_date",
+   "oldfieldtype": "Date",
+   "width": "100px"
+  },
+  {
+   "bold": 1,
+   "fieldname": "ends_on",
+   "fieldtype": "Datetime",
+   "label": "Ends On",
+   "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "contact_info",
+   "fieldtype": "Section Break",
+   "label": "Address & Contact",
+   "oldfieldtype": "Column Break",
+   "options": "fa fa-map-marker"
+  },
+  {
+   "depends_on": "eval:doc.__islocal",
+   "fieldname": "address_desc",
+   "fieldtype": "HTML",
+   "label": "Address Desc",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "address_html",
+   "fieldtype": "HTML",
+   "label": "Address HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.organization_lead",
+   "fieldname": "contact_html",
+   "fieldtype": "HTML",
+   "label": "Contact HTML",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "oldfieldname": "contact_no",
+   "oldfieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation"
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile No.",
+   "oldfieldname": "mobile_no",
+   "oldfieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:!doc.organization_lead",
+   "fieldname": "fax",
+   "fieldtype": "Data",
+   "label": "Fax",
+   "oldfieldname": "fax",
+   "oldfieldtype": "Data"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website",
+   "oldfieldname": "website",
+   "oldfieldtype": "Data"
+  },
+  {
+   "fieldname": "territory",
+   "fieldtype": "Link",
+   "label": "Territory",
+   "oldfieldname": "territory",
+   "oldfieldtype": "Link",
+   "options": "Territory",
+   "print_hide": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_info",
+   "fieldtype": "Section Break",
+   "label": "More Information",
+   "oldfieldtype": "Section Break",
+   "options": "fa fa-file-text"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Lead Type",
+   "oldfieldname": "type",
+   "oldfieldtype": "Select",
+   "options": "\nClient\nChannel Partner\nConsultant"
+  },
+  {
+   "fieldname": "market_segment",
+   "fieldtype": "Link",
+   "label": "Market Segment",
+   "oldfieldname": "market_segment",
+   "oldfieldtype": "Select",
+   "options": "Market Segment"
+  },
+  {
+   "fieldname": "industry",
+   "fieldtype": "Link",
+   "label": "Industry",
+   "oldfieldname": "industry",
+   "oldfieldtype": "Link",
+   "options": "Industry Type"
+  },
+  {
+   "fieldname": "request_type",
+   "fieldtype": "Select",
+   "label": "Request Type",
+   "oldfieldname": "request_type",
+   "oldfieldtype": "Select",
+   "options": "\nProduct Enquiry\nRequest for Information\nSuggestions\nOther"
+  },
+  {
+   "fieldname": "column_break3",
+   "fieldtype": "Column Break",
+   "oldfieldtype": "Column Break",
+   "width": "50%"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "oldfieldname": "company",
+   "oldfieldtype": "Link",
+   "options": "Company",
+   "remember_last_selected_value": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "unsubscribed",
+   "fieldtype": "Check",
+   "label": "Unsubscribed"
+  },
+  {
+   "default": "0",
+   "fieldname": "blog_subscriber",
+   "fieldtype": "Check",
+   "label": "Blog Subscriber"
+  }
+ ],
+ "icon": "fa fa-user",
+ "idx": 5,
+ "image_field": "image",
+ "modified": "2020-05-11 20:30:02.536647",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "Lead",
+ "name_case": "Title Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "permlevel": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All"
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager"
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User"
+  }
+ ],
+ "search_fields": "lead_name,lead_owner,status",
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "lead_name"
+}

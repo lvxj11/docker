@@ -1,0 +1,320 @@
+{
+ "creation": "2013-04-30 12:58:46",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "engine": "InnoDB",
+ "field_order": [
+  "sb0",
+  "home_page",
+  "cb4",
+  "title_prefix",
+  "section_break_6",
+  "website_theme",
+  "website_theme_image",
+  "website_theme_image_link",
+  "brand",
+  "banner_image",
+  "brand_html",
+  "set_banner_from_image",
+  "favicon",
+  "top_bar",
+  "navbar_search",
+  "top_bar_items",
+  "banner",
+  "banner_html",
+  "footer",
+  "copyright",
+  "address",
+  "footer_items",
+  "hide_footer_signup",
+  "integrations",
+  "google_analytics_id",
+  "column_break_17",
+  "misc_section",
+  "subdomain",
+  "disable_signup",
+  "section_break_38",
+  "head_html",
+  "robots_txt",
+  "route_redirects",
+  "section_break_39",
+  "chat_enable",
+  "chat_enable_from",
+  "chat_enable_to",
+  "chat_room_name",
+  "chat_welcome_message",
+  "chat_operators"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "Landing Page"
+  },
+  {
+   "description": "Link that is the website home page. Standard Links (index, login, products, blog, about, contact)",
+   "fieldname": "home_page",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Home Page"
+  },
+  {
+   "fieldname": "cb4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Show title in browser window as \"Prefix - title\"",
+   "fieldname": "title_prefix",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title Prefix"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Standard",
+   "fieldname": "website_theme",
+   "fieldtype": "Link",
+   "label": "Website Theme",
+   "options": "Website Theme"
+  },
+  {
+   "fieldname": "website_theme_image",
+   "fieldtype": "Image",
+   "hidden": 1,
+   "label": "Website Theme Image",
+   "options": "website_theme_image_link"
+  },
+  {
+   "fieldname": "website_theme_image_link",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Website Theme Image Link"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "brand",
+   "fieldtype": "Section Break",
+   "label": "Brand"
+  },
+  {
+   "description": "Select an image of approx width 150px with a transparent background for best results.",
+   "fieldname": "banner_image",
+   "fieldtype": "Attach Image",
+   "label": "Brand Image"
+  },
+  {
+   "description": "Brand is what appears on the top-left of the toolbar. If it is an image, make sure it\nhas a transparent background and use the &lt;img /&gt; tag. Keep size as 200px x 30px",
+   "fieldname": "brand_html",
+   "fieldtype": "Code",
+   "label": "Brand HTML",
+   "options": "HTML"
+  },
+  {
+   "fieldname": "set_banner_from_image",
+   "fieldtype": "Button",
+   "label": "Set Banner from Image"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "top_bar",
+   "fieldtype": "Section Break",
+   "label": "Top Bar"
+  },
+  {
+   "default": "0",
+   "fieldname": "navbar_search",
+   "fieldtype": "Check",
+   "label": "Include Search in Top Bar"
+  },
+  {
+   "fieldname": "top_bar_items",
+   "fieldtype": "Table",
+   "label": "Top Bar Items",
+   "options": "Top Bar Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "banner",
+   "fieldtype": "Section Break",
+   "label": "Banner"
+  },
+  {
+   "description": "Banner is above the Top Menu Bar.",
+   "fieldname": "banner_html",
+   "fieldtype": "Code",
+   "label": "Banner HTML",
+   "options": "HTML"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "footer",
+   "fieldtype": "Section Break",
+   "label": "Footer"
+  },
+  {
+   "fieldname": "copyright",
+   "fieldtype": "Data",
+   "label": "Copyright"
+  },
+  {
+   "description": "Address and other legal information you may want to put in the footer.",
+   "fieldname": "address",
+   "fieldtype": "Text Editor",
+   "label": "Address"
+  },
+  {
+   "fieldname": "footer_items",
+   "fieldtype": "Table",
+   "label": "Footer Items",
+   "options": "Top Bar Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_footer_signup",
+   "fieldtype": "Check",
+   "label": "Hide Footer Signup"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "integrations",
+   "fieldtype": "Section Break",
+   "label": "Integrations"
+  },
+  {
+   "description": "Add Google Analytics ID: eg. UA-89XXX57-1. Please search help on Google Analytics for more information.",
+   "fieldname": "google_analytics_id",
+   "fieldtype": "Data",
+   "label": "Google Analytics ID"
+  },
+  {
+   "fieldname": "column_break_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "misc_section",
+   "fieldtype": "Section Break",
+   "label": "Disable Signup"
+  },
+  {
+   "description": "An icon file with .ico extension. Should be 16 x 16 px. Generated using a favicon generator. [favicon-generator.org]",
+   "fieldname": "favicon",
+   "fieldtype": "Attach",
+   "label": "FavIcon"
+  },
+  {
+   "description": "Sub-domain provided by erpnext.com",
+   "fieldname": "subdomain",
+   "fieldtype": "Text",
+   "label": "Subdomain",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Disable Customer Signup link in Login page",
+   "fieldname": "disable_signup",
+   "fieldtype": "Check",
+   "label": "Disable Signup"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_38",
+   "fieldtype": "Section Break",
+   "label": "HTML Header, Robots and Redirects"
+  },
+  {
+   "description": "Added HTML in the &lt;head&gt; section of the web page, primarily used for website verification and SEO",
+   "fieldname": "head_html",
+   "fieldtype": "Code",
+   "label": "&lt;head&gt; HTML",
+   "options": "HTML"
+  },
+  {
+   "fieldname": "robots_txt",
+   "fieldtype": "Code",
+   "label": "Robots.txt"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_39",
+   "fieldtype": "Section Break",
+   "label": "Chat"
+  },
+  {
+   "default": "0",
+   "fieldname": "chat_enable",
+   "fieldtype": "Check",
+   "label": "Enable Chat"
+  },
+  {
+   "depends_on": "chat_enable",
+   "fieldname": "chat_enable_from",
+   "fieldtype": "Time",
+   "label": "From"
+  },
+  {
+   "depends_on": "chat_enable",
+   "fieldname": "chat_enable_to",
+   "fieldtype": "Time",
+   "label": "To"
+  },
+  {
+   "default": "Support",
+   "depends_on": "chat_enable",
+   "fieldname": "chat_room_name",
+   "fieldtype": "Data",
+   "label": "Chat Room Name"
+  },
+  {
+   "default": "Hi, how may I help you?",
+   "depends_on": "chat_enable",
+   "fieldname": "chat_welcome_message",
+   "fieldtype": "Data",
+   "label": "Welcome Message"
+  },
+  {
+   "depends_on": "chat_enable",
+   "fieldname": "chat_operators",
+   "fieldtype": "Table",
+   "label": "Chat Operators",
+   "options": "Chat Room User"
+  },
+  {
+   "fieldname": "route_redirects",
+   "fieldtype": "Table",
+   "label": "Route Redirects",
+   "options": "Website Route Redirect"
+  }
+ ],
+ "icon": "fa fa-cog",
+ "idx": 1,
+ "issingle": 1,
+ "max_attachments": 10,
+ "modified": "2019-06-12 17:16:37.452872",
+ "modified_by": "Administrator",
+ "module": "Website",
+ "name": "Website Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Website Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "track_changes": 1
+}

@@ -1,0 +1,130 @@
+{
+ "creation": "2014-09-01 14:14:14.292173",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "fieldname",
+  "fieldtype",
+  "label",
+  "allow_read_on_all_link_options",
+  "reqd",
+  "depends_on",
+  "read_only",
+  "show_in_filter",
+  "hidden",
+  "column_break_4",
+  "options",
+  "max_length",
+  "max_value",
+  "section_break_6",
+  "description",
+  "column_break_8",
+  "default"
+ ],
+ "fields": [
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Fieldname"
+  },
+  {
+   "fieldname": "fieldtype",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Fieldtype",
+   "options": "Attach\nAttach Image\nCheck\nCurrency\nData\nDate\nDatetime\nFloat\nHTML\nInt\nLink\nRating\nSelect\nSmall Text\nText\nText Editor\nTable\nSection Break\nColumn Break"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.fieldtype === 'Link'",
+   "fieldname": "allow_read_on_all_link_options",
+   "fieldtype": "Check",
+   "label": "Allow Read On All Link Options"
+  },
+  {
+   "default": "0",
+   "fieldname": "reqd",
+   "fieldtype": "Check",
+   "label": "Mandatory"
+  },
+  {
+   "fieldname": "depends_on",
+   "fieldtype": "Code",
+   "label": "Depends On"
+  },
+  {
+   "default": "0",
+   "fieldname": "read_only",
+   "fieldtype": "Check",
+   "label": "Read Only"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_in_filter",
+   "fieldtype": "Check",
+   "label": "Show in filter"
+  },
+  {
+   "default": "0",
+   "fieldname": "hidden",
+   "fieldtype": "Check",
+   "label": "Hidden"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Options"
+  },
+  {
+   "fieldname": "max_length",
+   "fieldtype": "Int",
+   "label": "Max Length"
+  },
+  {
+   "depends_on": "eval:doc.fieldtype=='Int'",
+   "fieldname": "max_value",
+   "fieldtype": "Int",
+   "label": "Max Value"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default",
+   "fieldtype": "Data",
+   "label": "Default"
+  }
+ ],
+ "istable": 1,
+ "modified": "2019-06-07 12:17:10.547133",
+ "modified_by": "Administrator",
+ "module": "Website",
+ "name": "Web Form Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

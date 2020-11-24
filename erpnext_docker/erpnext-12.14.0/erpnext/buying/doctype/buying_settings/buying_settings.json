@@ -1,0 +1,111 @@
+{
+ "creation": "2013-06-25 11:04:03",
+ "description": "Settings for Buying Module",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "field_order": [
+  "supp_master_name",
+  "supplier_group",
+  "buying_price_list",
+  "column_break_3",
+  "po_required",
+  "pr_required",
+  "maintain_same_rate",
+  "allow_multiple_items",
+  "subcontract",
+  "backflush_raw_materials_of_subcontract_based_on",
+  "column_break_11",
+  "over_transfer_allowance"
+ ],
+ "fields": [
+  {
+   "default": "Supplier Name",
+   "fieldname": "supp_master_name",
+   "fieldtype": "Select",
+   "label": "Supplier Naming By",
+   "options": "Supplier Name\nNaming Series"
+  },
+  {
+   "fieldname": "supplier_group",
+   "fieldtype": "Link",
+   "label": "Default Supplier Group",
+   "options": "Supplier Group"
+  },
+  {
+   "fieldname": "buying_price_list",
+   "fieldtype": "Link",
+   "label": "Default Buying Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "po_required",
+   "fieldtype": "Select",
+   "label": "Purchase Order Required",
+   "options": "No\nYes"
+  },
+  {
+   "fieldname": "pr_required",
+   "fieldtype": "Select",
+   "label": "Purchase Receipt Required",
+   "options": "No\nYes"
+  },
+  {
+   "default": "0",
+   "fieldname": "maintain_same_rate",
+   "fieldtype": "Check",
+   "label": "Maintain same rate throughout purchase cycle"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_multiple_items",
+   "fieldtype": "Check",
+   "label": "Allow Item to be added multiple times in a transaction"
+  },
+  {
+   "fieldname": "subcontract",
+   "fieldtype": "Section Break",
+   "label": "Subcontract"
+  },
+  {
+   "default": "Material Transferred for Subcontract",
+   "fieldname": "backflush_raw_materials_of_subcontract_based_on",
+   "fieldtype": "Select",
+   "label": "Backflush Raw Materials of Subcontract Based On",
+   "options": "BOM\nMaterial Transferred for Subcontract"
+  },
+  {
+   "depends_on": "eval:doc.backflush_raw_materials_of_subcontract_based_on == \"BOM\"",
+   "description": "Percentage you are allowed to transfer more against the quantity ordered. For example: If you have ordered 100 units. and your Allowance is 10% then you are allowed to transfer 110 units.",
+   "fieldname": "over_transfer_allowance",
+   "fieldtype": "Float",
+   "label": "Over Transfer Allowance (%)"
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "icon": "fa fa-cog",
+ "idx": 1,
+ "issingle": 1,
+ "modified": "2019-08-20 13:13:09.055189",
+ "modified_by": "Administrator",
+ "module": "Buying",
+ "name": "Buying Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ]
+}

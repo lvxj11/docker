@@ -1,0 +1,150 @@
+{
+ "allow_rename": 1,
+ "creation": "2013-01-10 16:34:31",
+ "description": "Create and Send Newsletters",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "engine": "InnoDB",
+ "field_order": [
+  "recipients",
+  "email_group",
+  "send_from",
+  "email_sent",
+  "newsletter_content",
+  "subject",
+  "message",
+  "send_unsubscribe_link",
+  "send_attachements",
+  "published",
+  "route",
+  "test_the_newsletter",
+  "test_email_id",
+  "test_send",
+  "scheduled_to_send"
+ ],
+ "fields": [
+  {
+   "fieldname": "email_group",
+   "fieldtype": "Table",
+   "in_standard_filter": 1,
+   "label": "Email Group",
+   "options": "Newsletter Email Group"
+  },
+  {
+   "fieldname": "send_from",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Sender",
+   "no_copy": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "email_sent",
+   "fieldtype": "Check",
+   "label": "Email Sent?",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "newsletter_content",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Small Text",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Text Editor",
+   "in_list_view": 1,
+   "label": "Message",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "send_unsubscribe_link",
+   "fieldtype": "Check",
+   "label": "Send Unsubscribe Link"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_attachements",
+   "fieldtype": "Check",
+   "label": "Send Attachements"
+  },
+  {
+   "default": "0",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "Published"
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Route",
+   "read_only": 1
+  },
+  {
+   "fieldname": "test_the_newsletter",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "A Lead with this Email Address should exist",
+   "fieldname": "test_email_id",
+   "fieldtype": "Data",
+   "label": "Test Email Address"
+  },
+  {
+   "fieldname": "test_send",
+   "fieldtype": "Button",
+   "label": "Test",
+   "options": "test_send"
+  },
+  {
+   "fieldname": "scheduled_to_send",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Scheduled To Send"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Section Break",
+   "label": "Recipients"
+  }
+ ],
+ "has_web_view": 1,
+ "icon": "fa fa-envelope",
+ "idx": 1,
+ "is_published_field": "published",
+ "max_attachments": 3,
+ "modified": "2019-09-06 22:15:55.471254",
+ "modified_by": "Administrator",
+ "module": "Email",
+ "name": "Newsletter",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Newsletter Manager",
+   "set_user_permissions": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "route": "newsletters",
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "title_field": "subject",
+ "track_changes": 1
+}

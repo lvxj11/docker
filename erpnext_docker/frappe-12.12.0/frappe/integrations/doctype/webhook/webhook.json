@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2017-09-08 16:16:13.060641",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_doc_events",
+  "naming_series",
+  "webhook_doctype",
+  "cb_doc_events",
+  "webhook_docevent",
+  "sb_condition",
+  "condition",
+  "cb_condition",
+  "html_condition",
+  "sb_webhook",
+  "request_url",
+  "cb_webhook",
+  "request_structure",
+  "sb_webhook_headers",
+  "webhook_headers",
+  "sb_webhook_data",
+  "webhook_data",
+  "webhook_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_doc_events",
+   "fieldtype": "Section Break",
+   "label": "Doc Events"
+  },
+  {
+   "fieldname": "webhook_doctype",
+   "fieldtype": "Link",
+   "label": "DocType",
+   "options": "DocType",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "cb_doc_events",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "webhook_docevent",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Doc Event",
+   "options": "after_insert\non_update\non_submit\non_cancel\non_trash\non_update_after_submit\non_change",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "sb_condition",
+   "fieldtype": "Section Break",
+   "label": "Webhook Trigger"
+  },
+  {
+   "description": "The webhook will be triggered if this expression is true",
+   "fieldname": "condition",
+   "fieldtype": "Small Text",
+   "label": "Condition"
+  },
+  {
+   "fieldname": "cb_condition",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "html_condition",
+   "fieldtype": "HTML",
+   "options": "<p><strong>Condition Examples:</strong></p>\n<pre>doc.status==\"Open\"<br>doc.due_date==nowdate()<br>doc.total &gt; 40000\n</pre>"
+  },
+  {
+   "fieldname": "sb_webhook",
+   "fieldtype": "Section Break",
+   "label": "Webhook Request"
+  },
+  {
+   "fieldname": "request_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Request URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_webhook_headers",
+   "fieldtype": "Section Break",
+   "label": "Webhook Headers"
+  },
+  {
+   "fieldname": "webhook_headers",
+   "fieldtype": "Table",
+   "label": "Headers",
+   "options": "Webhook Header"
+  },
+  {
+   "fieldname": "sb_webhook_data",
+   "fieldtype": "Section Break",
+   "label": "Webhook Data"
+  },
+  {
+   "depends_on": "eval: !doc.request_structure || doc.request_structure == \"Form URL-Encoded\"",
+   "fieldname": "webhook_data",
+   "fieldtype": "Table",
+   "label": "Data",
+   "options": "Webhook Data"
+  },
+  {
+   "fieldname": "cb_webhook",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "request_structure",
+   "fieldtype": "Select",
+   "label": "Request Structure",
+   "options": "\nForm URL-Encoded\nJSON"
+  },
+  {
+   "depends_on": "eval: doc.request_structure == \"JSON\"",
+   "fieldname": "webhook_json",
+   "fieldtype": "Code",
+   "label": "JSON Request Body"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "\nHOOK-.####"
+  }
+ ],
+ "links": [],
+ "modified": "2020-01-06 02:51:07.997566",
+ "modified_by": "Administrator",
+ "module": "Integrations",
+ "name": "Webhook",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "webhook_doctype",
+ "track_changes": 1
+}

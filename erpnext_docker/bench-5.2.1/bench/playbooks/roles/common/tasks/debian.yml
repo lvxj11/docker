@@ -1,0 +1,54 @@
+---
+
+- name: Setup OpenSSL dependancy
+  pip: name=pyOpenSSL version=16.2.0
+
+- name: install pillow prerequisites for Debian < 8
+  apt:
+    pkg:
+      - libjpeg8-dev
+      - libtiff4-dev
+      - tcl8.5-dev
+      - tk8.5-dev
+    state: present
+  when: ansible_distribution_version is version_compare('8', 'lt')
+
+- name: install pillow prerequisites for Debian 8
+  apt:
+    pkg:
+      - libjpeg62-turbo-dev
+      - libtiff5-dev
+      - tcl8.5-dev
+      - tk8.5-dev
+    state: present
+  when: ansible_distribution_version is version_compare('8', 'eq')
+
+- name: install pillow prerequisites for Debian 9
+  apt:
+    pkg:
+      - libjpeg62-turbo-dev
+      - libtiff5-dev
+      - tcl8.5-dev
+      - tk8.5-dev
+    state: present
+  when: ansible_distribution_version is version_compare('9', 'eq')
+
+
+- name: install pillow prerequisites for Debian >= 10
+  apt:
+    pkg:
+      - libjpeg62-turbo-dev
+      - libtiff5-dev
+      - tcl8.6-dev
+      - tk8.6-dev
+    state: present
+  when: ansible_distribution_version is version_compare('10', 'ge')
+
+- name: install pdf prerequisites debian
+  apt:
+    pkg:
+      - libssl-dev
+    state: present
+    force: yes
+
+...

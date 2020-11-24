@@ -1,0 +1,274 @@
+{
+ "allow_guest_to_view": 1,
+ "allow_import": 1,
+ "creation": "2013-03-28 10:35:30",
+ "description": "Page to show on the website\n",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_title",
+  "title",
+  "route",
+  "slideshow",
+  "cb1",
+  "published",
+  "show_title",
+  "start_date",
+  "end_date",
+  "sb1",
+  "content_type",
+  "dynamic_template",
+  "main_section",
+  "main_section_md",
+  "main_section_html",
+  "custom_javascript",
+  "insert_code",
+  "javascript",
+  "custom_css",
+  "insert_style",
+  "text_align",
+  "css",
+  "settings",
+  "section_break_17",
+  "show_sidebar",
+  "website_sidebar",
+  "column_break_20",
+  "enable_comments",
+  "idx",
+  "sb2",
+  "header",
+  "breadcrumbs",
+  "set_meta_tags"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_title",
+   "fieldtype": "Section Break",
+   "label": "Title"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Route",
+   "unique": 1
+  },
+  {
+   "fieldname": "slideshow",
+   "fieldtype": "Link",
+   "label": "Slideshow",
+   "options": "Website Slideshow"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break",
+   "width": "50%"
+  },
+  {
+   "default": "0",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "Published"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_title",
+   "fieldtype": "Check",
+   "label": "Show Title"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Datetime",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "default": "Rich Text",
+   "fieldname": "content_type",
+   "fieldtype": "Select",
+   "label": "Content Type",
+   "options": "Rich Text\nMarkdown\nHTML"
+  },
+  {
+   "depends_on": "eval:doc.content_type==='Rich Text'",
+   "fieldname": "main_section",
+   "fieldtype": "Text Editor",
+   "ignore_xss_filter": 1,
+   "in_global_search": 1,
+   "label": "Main Section"
+  },
+  {
+   "depends_on": "eval:doc.content_type==='Markdown'",
+   "fieldname": "main_section_md",
+   "fieldtype": "Markdown Editor",
+   "label": "Main Section (Markdown)"
+  },
+  {
+   "depends_on": "eval:doc.content_type==='HTML'",
+   "fieldname": "main_section_html",
+   "fieldtype": "HTML Editor",
+   "ignore_xss_filter": 1,
+   "label": "Main Section (HTML)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "custom_javascript",
+   "fieldtype": "Section Break",
+   "label": "Script"
+  },
+  {
+   "default": "0",
+   "description": "Add code as &lt;script&gt;",
+   "fieldname": "insert_code",
+   "fieldtype": "Check",
+   "label": "Insert Code"
+  },
+  {
+   "depends_on": "insert_code",
+   "fieldname": "javascript",
+   "fieldtype": "Code",
+   "label": "Javascript",
+   "options": "Javascript"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "custom_css",
+   "fieldtype": "Section Break",
+   "label": "Style"
+  },
+  {
+   "default": "0",
+   "fieldname": "insert_style",
+   "fieldtype": "Check",
+   "label": "Insert Style"
+  },
+  {
+   "fieldname": "text_align",
+   "fieldtype": "Select",
+   "label": "Text Align",
+   "options": "Left\nCenter\nRight"
+  },
+  {
+   "depends_on": "insert_style",
+   "fieldname": "css",
+   "fieldtype": "Code",
+   "label": "CSS",
+   "options": "CSS"
+  },
+  {
+   "fieldname": "settings",
+   "fieldtype": "Section Break",
+   "label": "Settings"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_17",
+   "fieldtype": "Section Break",
+   "label": "Sidebar and Comments"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_sidebar",
+   "fieldtype": "Check",
+   "label": "Show Sidebar"
+  },
+  {
+   "fieldname": "website_sidebar",
+   "fieldtype": "Link",
+   "label": "Website Sidebar",
+   "options": "Website Sidebar"
+  },
+  {
+   "fieldname": "column_break_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_comments",
+   "fieldtype": "Check",
+   "label": "Enable Comments"
+  },
+  {
+   "description": "0 is highest",
+   "fieldname": "idx",
+   "fieldtype": "Int",
+   "label": "Priority"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Header, Breadcrumbs and Meta Tags"
+  },
+  {
+   "description": "HTML for header section. Optional",
+   "fieldname": "header",
+   "fieldtype": "HTML Editor",
+   "label": "Header"
+  },
+  {
+   "description": "List as [{\"label\": _(\"Jobs\"), \"route\":\"jobs\"}]",
+   "fieldname": "breadcrumbs",
+   "fieldtype": "Code",
+   "label": "Breadcrumbs",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "set_meta_tags",
+   "fieldtype": "Button",
+   "label": "Set Meta Tags"
+  },
+  {
+   "default": "0",
+   "fieldname": "dynamic_template",
+   "fieldtype": "Check",
+   "label": "Dynamic Template"
+  }
+ ],
+ "has_web_view": 1,
+ "icon": "fa fa-file-alt",
+ "idx": 1,
+ "is_published_field": "published",
+ "max_attachments": 20,
+ "modified": "2019-10-02 13:58:50.825481",
+ "modified_by": "Administrator",
+ "module": "Website",
+ "name": "Web Page",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "import": 1,
+   "read": 1,
+   "role": "Website Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "title",
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "title_field": "title",
+ "track_changes": 1
+}

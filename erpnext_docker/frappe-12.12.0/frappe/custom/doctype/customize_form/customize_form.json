@@ -1,0 +1,204 @@
+{
+ "autoname": "DL.####",
+ "creation": "2013-01-29 17:55:08",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "doc_type",
+  "properties",
+  "label",
+  "default_print_format",
+  "max_attachments",
+  "allow_copy",
+  "istable",
+  "editable_grid",
+  "quick_entry",
+  "track_changes",
+  "track_views",
+  "allow_auto_repeat",
+  "allow_import",
+  "image_view",
+  "column_break_5",
+  "title_field",
+  "image_field",
+  "search_fields",
+  "section_break_8",
+  "sort_field",
+  "column_break_10",
+  "sort_order",
+  "fields_section_break",
+  "fields"
+ ],
+ "fields": [
+  {
+   "fieldname": "doc_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Enter Form Type",
+   "options": "DocType"
+  },
+  {
+   "depends_on": "doc_type",
+   "fieldname": "properties",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Change Label (via Custom Translation)"
+  },
+  {
+   "fieldname": "default_print_format",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Default Print Format",
+   "options": "Print Format"
+  },
+  {
+   "fieldname": "max_attachments",
+   "fieldtype": "Int",
+   "label": "Max Attachments"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_copy",
+   "fieldtype": "Check",
+   "label": "Hide Copy"
+  },
+  {
+   "default": "0",
+   "fieldname": "istable",
+   "fieldtype": "Check",
+   "label": "Is Table",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "istable",
+   "fieldname": "editable_grid",
+   "fieldtype": "Check",
+   "label": "Editable Grid"
+  },
+  {
+   "default": "1",
+   "fieldname": "quick_entry",
+   "fieldtype": "Check",
+   "label": "Quick Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "track_changes",
+   "fieldtype": "Check",
+   "label": "Track Changes"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.image_field",
+   "fieldname": "image_view",
+   "fieldtype": "Check",
+   "label": "Image View"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Use this fieldname to generate title",
+   "fieldname": "title_field",
+   "fieldtype": "Data",
+   "label": "Title Field"
+  },
+  {
+   "description": "Must be of type \"Attach Image\"",
+   "fieldname": "image_field",
+   "fieldtype": "Data",
+   "label": "Image Field"
+  },
+  {
+   "description": "Fields separated by comma (,) will be included in the \"Search By\" list of Search dialog box",
+   "fieldname": "search_fields",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Search Fields"
+  },
+  {
+   "depends_on": "doc_type",
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sort_field",
+   "fieldtype": "Select",
+   "label": "Sort Field"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Select",
+   "label": "Sort Order",
+   "options": "ASC\nDESC"
+  },
+  {
+   "depends_on": "doc_type",
+   "description": "Customize Label, Print Hide, Default etc.",
+   "fieldname": "fields_section_break",
+   "fieldtype": "Section Break",
+   "label": "Fields"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "fields",
+   "fieldtype": "Table",
+   "label": "Fields",
+   "options": "Customize Form Field"
+  },
+  {
+   "default": "0",
+   "fieldname": "track_views",
+   "fieldtype": "Check",
+   "label": "Track Views"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_auto_repeat",
+   "fieldtype": "Check",
+   "label": "Allow Auto Repeat"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_import",
+   "fieldtype": "Check",
+   "label": "Allow Import (via Data Import Tool)"
+  }
+ ],
+ "hide_toolbar": 1,
+ "icon": "fa fa-glass",
+ "idx": 1,
+ "issingle": 1,
+ "modified": "2019-10-08 11:16:36.698006",
+ "modified_by": "Administrator",
+ "module": "Custom",
+ "name": "Customize Form",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "doc_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
