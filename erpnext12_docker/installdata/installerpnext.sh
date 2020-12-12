@@ -30,10 +30,10 @@ bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password
 # 安装erpnext应用到新网站
 bench --site site1.local install-app erpnext
 # 清理垃圾
-apt clean
-apt autoremove
-rm -rf /var/lib/apt/lists/*
-pip cache purge
-npm cache clean --force
-yarn cache clean
+sudo apt clean
+sudo apt autoremove
+sudo rm -rf /var/lib/apt/lists/*
+sudo pip cache purge
+sudo npm cache clean --force
+sudo yarn cache clean
 exit 0
