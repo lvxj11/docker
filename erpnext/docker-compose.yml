@@ -2,15 +2,15 @@ version: '3'
 
 services:
   frappe:
-    image: registry.cn-beijing.aliyuncs.com/lvxj11/erpnext:V12
+    image: registry.cn-hangzhou.aliyuncs.com/lvxj11/nexterp:20201118
     restart: unless-stopped
     environment:
       - MARIADB_ROOT_PASSWORD=Pass0129
       - ADMIN_PASSWORD=admin
     ports:
-      - "31010:80"
-      - "31011:443"
-      - "31012:8000"
+      - "46110:80"
+      - "46111:443"
+      - "46112:8000"
     depends_on:
       - redis
       - mariadb
@@ -18,14 +18,12 @@ services:
       - redis
       - mariadb
     volumes:
-      - sites-vol:/home/frappe/frappe-bench/sites:rw
-      - nginx-config-vol:/etc/nginx
+      - sites:/home/frappe/frappe-bench/sites:rw
+      - nginx:/etc/nginx
 
   redis:
     image: redis:5
     restart: unless-stopped
-    volumes:
-      - redis-vol:/data
 
   mariadb:
     image: mariadb:10.3
@@ -33,13 +31,12 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=Pass0129
     ports:
-      - "31013:3306"
+      - "46113:3306"
     volumes:
       - ./frappe-mariadb.cnf:/etc/mysql/conf.d/frappe.cnf
-      - mariadb-vol:/var/lib/mysql
+      - data_db:/var/lib/mysql
 
 volumes:
-  mariadb-vol:
-  redis-vol:
-  sites-vol:
-  nginx-config-vol:
+  data_db:
+  sites:
+  nginx:

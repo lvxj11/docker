@@ -8,5 +8,5 @@
     "dns_multitenant": true,
     "serve_default_site": false,
     "socketio_port": 9000,
-    "webserver_port": 8000
+    "webserver_port": 48180
 }

@@ -1,0 +1,6 @@
+# MariaDB Ubuntu bionic repository list
+# http://mariadb.org/mariadb/repositories/
+# deb http://mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main
+# deb-src http://mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main
+deb https://mirrors.aliyun.com/mariadb/repo/10.4/ubuntu bionic main
+deb-src https://mirrors.aliyun.com/mariadb/repo/10.4/ubuntu bionic main deb-src
