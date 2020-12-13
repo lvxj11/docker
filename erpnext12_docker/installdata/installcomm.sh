@@ -74,7 +74,9 @@ groupadd -g 1000 frappe
 useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/frappe
-cp -af /root/.pip /home/frappe/
+if [$1 != "noMirror"]; then
+    cp -af /root/.pip /home/frappe/
+fi
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /home/frappe/.bashrc
 chown -R frappe.frappe /home/frappe
 # 设置语言环境
