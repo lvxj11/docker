@@ -1,4 +1,5 @@
-#！/bin/bash
+#!/bin/bash
+source /etc/profile
 sudo service redis-server restart
 sudo service mysql restart
 export PATH=/home/frappe/.local/bin:\$PATH

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 cd ~
+alias python=python3
+alias pip=pip3
 # 配置运行环境变量
 echo "export PATH=/home/frappe/.local/bin:\$PATH" >> ~/.bashrc
 export PATH=/home/frappe/.local/bin:$PATH

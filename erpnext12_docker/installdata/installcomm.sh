@@ -95,10 +95,13 @@ python3 -m pip install --upgrade setuptools cryptography psutil
 alias python=python3
 alias pip=pip3
 # 安装mariadb10.3版
-apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-echo "deb https://mirrors.aliyun.com/mariadb/repo/10.3/ubuntu bionic main" > /etc/apt/sources.list.d/mariadb.list
+apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+add-apt-repository 'deb [arch=amd64,arm64,ppc64el] https://mirrors.tuna.tsinghua.edu.cn/mariadb/repo/10.3/ubuntu bionic main'
+# apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+# echo "deb https://mirrors.aliyun.com/mariadb/repo/10.3/ubuntu bionic main" > /etc/apt/sources.list.d/mariadb.list
 apt update && apt upgrade -y
-DEBIAN_FRONTEND=noninteractive apt install -y mariadb-server \
+DEBIAN_FRONTEND=noninteractive apt install -y \
+    mariadb-server \
     mariadb-client \
     libmariadbclient18 \
     python3-mysqldb
