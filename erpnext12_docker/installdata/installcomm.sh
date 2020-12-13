@@ -48,7 +48,6 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     xfonts-75dpi \
     xfonts-base \
     zlib1g-dev \
-    apt-transport-https \
     libsasl2-dev \
     libldap2-dev \
     libcups2-dev \
@@ -56,6 +55,8 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     libssl1.1 \
     virtualenv \
     software-properties-common \
+    dirmngr \
+    apt-transport-https \
     redis-server
 # 安装wkhtmltox
 wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
@@ -95,9 +96,9 @@ python3 -m pip install --upgrade setuptools cryptography psutil
 alias python=python3
 alias pip=pip3
 # 安装mariadb10.3版
-apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+# apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 add-apt-repository 'deb [arch=amd64,arm64,ppc64el] https://mirrors.tuna.tsinghua.edu.cn/mariadb/repo/10.3/ubuntu bionic main'
-# apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 # echo "deb https://mirrors.aliyun.com/mariadb/repo/10.3/ubuntu bionic main" > /etc/apt/sources.list.d/mariadb.list
 apt update && apt upgrade -y
 DEBIAN_FRONTEND=noninteractive apt install -y \
