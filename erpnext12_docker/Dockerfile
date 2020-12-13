@@ -10,7 +10,7 @@ ENV ADMIN_PASSWORD=admin
 COPY ./installdata/installcomm.sh /installdata/installcomm.sh
 
 # 运行基础软件安装脚本
-RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh
+RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh noMirror
 
 # 切换用户
 USER frappe

@@ -1,17 +1,19 @@
 #!/bin/bash
 set -e
 # 修改安装源加速安装
-rm -f /etc/apt/sources.list
-echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list
-echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
-echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
+if [$1 != "noMirror"]; then
+    rm -f /etc/apt/sources.list
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
+fi
 # 安装基础软件
 apt update && apt upgrade -y
 DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -60,11 +62,13 @@ wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmlt
 apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 # 修改pip默认源加速安装
-mkdir -p /root/.pip
-echo '[global]' > /root/.pip/pip.conf
-echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
-echo '[install]' >> /root/.pip/pip.conf
-echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
+if [$1 != "noMirror"]; then
+    mkdir -p /root/.pip
+    echo '[global]' > /root/.pip/pip.conf
+    echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
+    echo '[install]' >> /root/.pip/pip.conf
+    echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
+fi
 # 建立新用户组和用户
 groupadd -g 1000 frappe
 useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
@@ -115,9 +119,13 @@ mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
 # 安装nodejs和yarn
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt install -y nodejs
-npm config set registry https://registry.npm.taobao.org
+if [$1 != "noMirror"]; then
+    npm config set registry https://registry.npm.taobao.org
+fi
 npm install -g yarn
-yarn config set registry https://registry.npm.taobao.org
+if [$1 != "noMirror"]; then
+    yarn config set registry https://registry.npm.taobao.org
+fi
 # 清理垃圾
 apt clean
 apt autoremove
