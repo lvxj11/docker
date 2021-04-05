@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 LABEL author=lvxj11
 
 # 设定参数
-ENV MARIADB_ROOT_PASSWORD=Pass0129
+ENV MARIADB_ROOT_PASSWORD=Pass1234
 ENV ADMIN_PASSWORD=admin
 
 # 拷贝基础软件安装脚本
