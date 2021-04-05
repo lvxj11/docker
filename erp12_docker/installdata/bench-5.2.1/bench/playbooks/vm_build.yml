@@ -1,9 +1,0 @@
----
-- name: Install Packer
-  hosts: localhost
-  become: yes
-  become_user: root
-  roles:
-    - { role: virtualbox, tags: "virtualbox" }
-    - { role: packer,     tags: "packer"     }
-...

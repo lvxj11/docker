@@ -1,6 +1,0 @@
-[Unit]
-After=network.target
-Requires={{ bench_name }}-web.target {{ bench_name }}-workers.target {{ bench_name }}-redis.target
-
-[Install]
-WantedBy=multi-user.target

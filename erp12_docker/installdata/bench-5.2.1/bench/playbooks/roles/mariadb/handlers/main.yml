@@ -1,3 +1,0 @@
----
-- name: restart mysql
-  command: /tmp/installdata/dbrestart.sh
