@@ -30,8 +30,8 @@ bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password
 # 安装erpnext应用到新网站
 bench --site site1.local install-app erpnext
 # 安装中文本地化
-bench get-app --branch master https://gitee.com/yuzelin/ebclocal.git
-bench --site site1.local install-app ebclocal
+bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
+bench install-app erpnext_chinese --site site1.local
 # 设置网站超时时间
 bench config http_timeout 6000
 # 修正权限
