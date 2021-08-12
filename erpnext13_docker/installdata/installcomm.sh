@@ -2,7 +2,7 @@
 set -e
 # 修改安装源加速国内安装。
 if [$1 != "noMirror"]; then
-    echo "修改安装源加速国内安装"
+    echo "===================修改安装源加速国内安装==================="
     rm -f /etc/apt/sources.list
     echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' >> /etc/apt/sources.list
@@ -16,7 +16,7 @@ if [$1 != "noMirror"]; then
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
 fi
 # 安装基础软件
-echo "安装基础软件"
+echo "===================安装基础软件==================="
 apt update && apt upgrade -y
 DEBIAN_FRONTEND=noninteractive apt install -y \
     git \
@@ -61,13 +61,13 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     apt-transport-https \
     redis-server
 # 安装wkhtmltox
-echo "安装wkhtmltox"
+echo "===================安装wkhtmltox==================="
 wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
 apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 # 修改pip默认源加速国内安装
 if [$1 != "noMirror"]; then
-    echo "修改pip默认源加速国内安装"
+    echo "===================修改pip默认源加速国内安装==================="
     mkdir -p /root/.pip
     echo '[global]' > /root/.pip/pip.conf
     echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
@@ -75,7 +75,7 @@ if [$1 != "noMirror"]; then
     echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
 fi
 # 建立新用户组和用户
-echo "建立新用户组和用户"
+echo "===================建立新用户组和用户==================="
 groupadd -g 1000 frappe
 useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -86,26 +86,26 @@ fi
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /home/frappe/.bashrc
 chown -R frappe.frappe /home/frappe
 # 设置语言环境
-echo "设置语言环境"
+echo "===================设置语言环境==================="
 sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 locale-gen
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /root/.bashrc
 # 设置时区为上海
-echo "设置时区为上海"
+echo "===================设置时区为上海==================="
 ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 dpkg-reconfigure -f noninteractive tzdata
 # 设置监控文件数量上限
-echo "设置监控文件数量上限"
+echo "===================设置监控文件数量上限==================="
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
 # 安装并升级pip及工具包
-echo "安装并升级pip及工具包"
+echo "===================安装并升级pip及工具包==================="
 cd ~
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade setuptools cryptography psutil
 alias python=python3
 alias pip=pip3
 # 安装mariadb10.3版
-echo "安装mariadb10.3版"
+echo "===================安装mariadb10.3版==================="
 # apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 add-apt-repository 'deb [arch=amd64,arm64,ppc64el] https://mirrors.tuna.tsinghua.edu.cn/mariadb/repo/10.3/ubuntu bionic main'
@@ -117,7 +117,7 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     libmariadbclient18 \
     python3-mysqldb
 # 修改数据库配置文件
-echo "修改数据库配置文件"
+echo "===================修改数据库配置文件==================="
 echo "[mysqld]" > /etc/mysql/conf.d/frappe.cnf
 echo "character-set-client-handshake = FALSE" >> /etc/mysql/conf.d/frappe.cnf
 echo "character-set-server = utf8mb4" >> /etc/mysql/conf.d/frappe.cnf
@@ -134,7 +134,7 @@ mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MAR
 mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
 # mysqladmin -u root password Pass0129
 # 安装nodejs和yarn
-echo "安装nodejs和yarn"
+echo "===================安装nodejs和yarn==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt install -y nodejs
 if [$1 != "noMirror"]; then
@@ -145,7 +145,7 @@ if [$1 != "noMirror"]; then
     yarn config set registry https://registry.npm.taobao.org
 fi
 # 清理垃圾，基础需求安装完毕。
-echo "清理垃圾，基础需求安装完毕。"
+echo "===================清理垃圾，基础需求安装完毕。==================="
 apt clean
 apt autoremove
 rm -rf /var/lib/apt/lists/*
