@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # 修改安装源加速国内安装。
-if [$1 != "noMirror"]; then
+if [ $1 != "noMirror" ];then
     echo "===================修改安装源加速国内安装==================="
     rm -f /etc/apt/sources.list
     echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list
@@ -66,7 +66,7 @@ wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmlt
 apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 # 修改pip默认源加速国内安装
-if [$1 != "noMirror"]; then
+if [ $1 != "noMirror" ];then
     echo "===================修改pip默认源加速国内安装==================="
     mkdir -p /root/.pip
     echo '[global]' > /root/.pip/pip.conf
@@ -80,7 +80,7 @@ groupadd -g 1000 frappe
 useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/frappe
-if [$1 != "noMirror"]; then
+if [ $1 != "noMirror" ];then
     cp -af /root/.pip /home/frappe/
 fi
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /home/frappe/.bashrc
@@ -137,11 +137,11 @@ mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
 echo "===================安装nodejs和yarn==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt install -y nodejs
-if [$1 != "noMirror"]; then
+if [ $1 != "noMirror" ];then
     npm config set registry https://registry.npm.taobao.org
 fi
 npm install -g yarn
-if [$1 != "noMirror"]; then
+if [ $1 != "noMirror" ];then
     yarn config set registry https://registry.npm.taobao.org
 fi
 # 清理垃圾，基础需求安装完毕。
