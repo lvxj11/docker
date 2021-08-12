@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 # 修改安装源加速国内安装。
+echo "===================根据参数决定是否修改安装源==================="
 if [ $1 != "noMirror" ];then
     echo "===================修改安装源加速国内安装==================="
     rm -f /etc/apt/sources.list
@@ -14,6 +15,8 @@ if [ $1 != "noMirror" ];then
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
+else
+    echo "===================不修改安装源==================="
 fi
 # 安装基础软件
 echo "===================安装基础软件==================="
@@ -66,6 +69,7 @@ wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmlt
 apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 # 修改pip默认源加速国内安装
+echo "===================根据参数决定是否修改pip源==================="
 if [ $1 != "noMirror" ];then
     echo "===================修改pip默认源加速国内安装==================="
     mkdir -p /root/.pip
@@ -73,6 +77,8 @@ if [ $1 != "noMirror" ];then
     echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
     echo '[install]' >> /root/.pip/pip.conf
     echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
+else
+    echo "===================不修改pip源==================="
 fi
 # 建立新用户组和用户
 echo "===================建立新用户组和用户==================="
@@ -80,8 +86,13 @@ groupadd -g 1000 frappe
 useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/frappe
+# 修改用户pip默认源加速国内安装
+echo "===================根据参数决定是否修改用户pip源==================="
 if [ $1 != "noMirror" ];then
+    echo "===================修改用户pip默认源加速国内安装==================="
     cp -af /root/.pip /home/frappe/
+else
+    echo "===================不修改用户pip源==================="
 fi
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /home/frappe/.bashrc
 chown -R frappe.frappe /home/frappe
@@ -137,12 +148,15 @@ mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
 echo "===================安装nodejs和yarn==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt install -y nodejs
-if [ $1 != "noMirror" ];then
-    npm config set registry https://registry.npm.taobao.org
-fi
 npm install -g yarn
+# 修改npm及yarn源
+echo "===================根据参数决定是否修改npm和yarn源==================="
 if [ $1 != "noMirror" ];then
+    echo "===================修改npm和yarn源加速国内安装==================="
+    npm config set registry https://registry.npm.taobao.org
     yarn config set registry https://registry.npm.taobao.org
+else
+    echo "===================不修改npm和yarn源==================="
 fi
 # 清理垃圾，基础需求安装完毕。
 echo "===================清理垃圾，基础需求安装完毕。==================="
