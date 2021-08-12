@@ -16,13 +16,13 @@ RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh noMirror
 USER frappe
 WORKDIR /home/frappe
 
-# 拷贝erpnext12安装脚本
+# 拷贝erpnext安装脚本
 COPY ./installdata/installerpnext.sh /installdata/installerpnext.sh
 
-# 运行erpnext12安装脚本
+# 运行erpnext安装脚本
 RUN sudo chmod -R 777 /installdata/* && /installdata/installerpnext.sh
 
-# 拷贝erpnext12启动脚本
+# 拷贝erpnext启动脚本
 COPY ./installdata/start.sh /installdata/start.sh
 
 # 修改启动脚本权限
