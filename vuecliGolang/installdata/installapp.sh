@@ -28,9 +28,9 @@ echo "===================建立工作目录==================="
 mkdir /myProject
 # 清理垃圾,ERPNext安装完毕
 echo "===================清理垃圾,ERPNext安装完毕==================="
-sudo -H apt clean
-sudo -H apt autoremove
-sudo -H rm -rf /var/lib/apt/lists/*
-sudo -H npm cache clean --force
-sudo -H yarn cache clean
+apt clean
+apt autoremove
+rm -rf /var/lib/apt/lists/*
+npm cache clean --force
+yarn cache clean
 exit 0
