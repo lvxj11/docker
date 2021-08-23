@@ -17,4 +17,5 @@ VOLUME /myProject
 STOPSIGNAL SIGTERM
 
 # ENTRYPOINT ["bash"]
-CMD ["/installdata/start.sh"]
+# CMD ["/installdata/start.sh"]
+CMD /bin/bash -c "while true;do echo hello docker;sleep 3600;done"
