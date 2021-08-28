@@ -17,7 +17,7 @@ USER frappe
 WORKDIR /home/frappe
 
 # 运行erpnext安装脚本
-RUN /installdata/installerpnext.sh && sudo /installdata/alterSources.sh
+RUN /installdata/installerpnext.sh
 
 EXPOSE 80 443 3306 8000 9000 6787
 

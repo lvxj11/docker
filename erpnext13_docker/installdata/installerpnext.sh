@@ -44,6 +44,9 @@ bench config http_timeout 6000
 # 修正权限
 echo "===================修正权限==================="
 sudo chown -R frappe:frappe /home/frappe/frappe-bench/*
+# 修改安装源为国内源
+echo "===================修改安装源为国内源==================="
+sudo -H /installdata/alterSources.sh
 # 清理垃圾,ERPNext安装完毕
 echo "===================清理垃圾,ERPNext安装完毕==================="
 sudo -H apt clean

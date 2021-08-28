@@ -27,12 +27,3 @@ echo "===================修改npm源==================="
 npm config set registry https://registry.npm.taobao.org
 echo "===================修改yarn源==================="
 yarn config set registry https://registry.npm.taobao.org
-# 清理垃圾，基础需求安装完毕。
-echo "===================清理垃圾==================="
-sudo -H apt clean
-sudo -H apt autoremove
-sudo -H rm -rf /var/lib/apt/lists/*
-sudo -H pip cache purge
-sudo -H npm cache clean --force
-sudo -H yarn cache clean
-exit 0
