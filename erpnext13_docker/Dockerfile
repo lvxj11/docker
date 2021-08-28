@@ -7,7 +7,7 @@ ENV MARIADB_ROOT_PASSWORD=Pass1234
 ENV ADMIN_PASSWORD=admin
 
 # 拷贝基础软件安装脚本
-COPY ./installdata/installcomm.sh /installdata/installcomm.sh
+COPY ./installdata /installdata
 
 # 运行基础软件安装脚本
 RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh noMirror
@@ -16,17 +16,8 @@ RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh noMirror
 USER frappe
 WORKDIR /home/frappe
 
-# 拷贝erpnext安装脚本
-COPY ./installdata/installerpnext.sh /installdata/installerpnext.sh
-
 # 运行erpnext安装脚本
-RUN sudo chmod -R 777 /installdata/* && /installdata/installerpnext.sh
-
-# 拷贝erpnext启动脚本
-COPY ./installdata/start.sh /installdata/start.sh
-
-# 修改启动脚本权限
-RUN sudo chmod -R 777 /installdata/start.sh
+RUN /installdata/installerpnext.sh && sudo /installdata/alterSources.sh
 
 EXPOSE 80 443 3306 8000 9000 6787
 

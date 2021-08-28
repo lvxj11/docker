@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
-# 修改安装源加速国内安装。
-echo "===================根据参数决定是否修改安装源==================="
-if [ $1 != "noMirror" ];then
-    echo "===================修改安装源加速国内安装==================="
+# 定义修改源函数
+aptSources() {
+    # 在执行前确定有操作权限
     rm -f /etc/apt/sources.list
     echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' > /etc/apt/sources.list
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse' >> /etc/apt/sources.list
@@ -15,6 +14,20 @@ if [ $1 != "noMirror" ];then
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse' >> /etc/apt/sources.list
+}
+pipSources() {
+    # 在执行前确定有操作权限
+    mkdir -p ~/.pip
+    echo '[global]' > ~/.pip/pip.conf
+    echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> ~/.pip/pip.conf
+    echo '[install]' >> ~/.pip/pip.conf
+    echo 'trusted-host = mirrors.aliyun.com' >> ~/.pip/pip.conf
+}
+# 修改安装源加速国内安装。
+echo "===================根据参数决定是否修改安装源==================="
+if [ $1 != "noMirror" ];then
+    echo "===================修改安装源加速国内安装==================="
+    aptSources
 else
     echo "===================不修改安装源==================="
 fi
@@ -72,11 +85,7 @@ rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 echo "===================根据参数决定是否修改pip源==================="
 if [ $1 != "noMirror" ];then
     echo "===================修改pip默认源加速国内安装==================="
-    mkdir -p /root/.pip
-    echo '[global]' > /root/.pip/pip.conf
-    echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
-    echo '[install]' >> /root/.pip/pip.conf
-    echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
+    pipSources
 else
     echo "===================不修改pip源==================="
 fi
@@ -143,20 +152,28 @@ service mysql restart
 # 授权远程访问并修改密码
 mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
-# mysqladmin -u root password Pass0129
-# 安装nodejs和yarn
-echo "===================安装nodejs和yarn==================="
+# 安装nodejs
+echo "===================安装nodejs==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt install -y nodejs
-npm install -g yarn
-# 修改npm及yarn源
-echo "===================根据参数决定是否修改npm和yarn源==================="
+# 修改npm源
+echo "===================根据参数决定是否修改npm源==================="
 if [ $1 != "noMirror" ];then
-    echo "===================修改npm和yarn源加速国内安装==================="
+    echo "===================修改npm源加速国内安装==================="
     npm config set registry https://registry.npm.taobao.org
+else
+    echo "===================不修改npm源==================="
+fi
+# 安装yarn
+echo "===================安装yarn==================="
+npm install -g yarn
+# 修改yarn源
+echo "===================根据参数决定是否修改yarn源==================="
+if [ $1 != "noMirror" ];then
+    echo "===================修改yarn源加速国内安装==================="
     yarn config set registry https://registry.npm.taobao.org
 else
-    echo "===================不修改npm和yarn源==================="
+    echo "===================不修改yarn源==================="
 fi
 # 清理垃圾，基础需求安装完毕。
 echo "===================清理垃圾，基础需求安装完毕。==================="
