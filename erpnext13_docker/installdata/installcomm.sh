@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # 定义修改源函数
-. ./alterSources.sh
+. /installdata/alterSources.sh
 # 修改安装源加速国内安装。
 if [ $1 == "cnMirror" ];then
     echo "===================修改安装源加速国内安装==================="

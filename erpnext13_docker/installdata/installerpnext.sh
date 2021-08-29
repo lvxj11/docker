@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # 定义修改源函数
-. ./alterSources.sh
+. /installdata/alterSources.sh
 # 配置运行环境变量
 echo "===================配置运行环境变量==================="
 cd ~
