@@ -89,8 +89,8 @@ echo "default-character-set = utf8mb4" >> /etc/mysql/conf.d/frappe.cnf
 echo "" >> /etc/mysql/conf.d/frappe.cnf
 service mysql restart
 # 授权远程访问并修改密码
-mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
+mysqladmin -u root -h 127.0.0.1 password ${MARIADB_ROOT_PASSWORD}
 # 安装nodejs
 echo "===================安装nodejs==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
