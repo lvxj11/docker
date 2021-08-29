@@ -3,7 +3,7 @@ set -e
 # 定义修改源函数
 . /installdata/alterSources.sh
 # 修改安装源加速国内安装。
-if [ $1 == "cnMirror" ];then
+if [ "$1" == "cnMirror" ];then
     echo "===================修改安装源加速国内安装==================="
     aptSources
 else
@@ -34,7 +34,7 @@ apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 wkhtmltopdf -V
 # 修改pip默认源加速国内安装
-if [ $1 == "cnMirror" ];then
+if [ "$1" == "cnMirror" ];then
     echo "===================修改pip默认源加速国内安装==================="
     pipSources
 else
@@ -47,7 +47,7 @@ useradd --no-log-init -r -m -u 1000 -g 1000 -G  sudo frappe
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/frappe
 # 修改用户pip默认源加速国内安装
-if [ $1 == "cnMirror" ];then
+if [ "$1" == "cnMirror" ];then
     echo "===================修改用户pip默认源加速国内安装==================="
     cp -af /root/.pip /home/frappe/
 else
@@ -75,6 +75,30 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade setuptools cryptography psutil
 alias python=python3
 alias pip=pip3
+# 安装nodejs
+echo "===================安装nodejs==================="
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+apt install -y nodejs
+# 修改npm源
+if [ "$1" == "cnMirror" ];then
+    echo "===================修改npm源加速国内安装==================="
+    npmSources
+else
+    echo "===================不修改npm源==================="
+fi
+# 升级npm
+echo "===================升级npm==================="
+npm install -g npm
+# 安装yarn
+echo "===================安装yarn==================="
+npm install -g yarn
+# 修改yarn源
+if [ "$1" == "cnMirror" ];then
+    echo "===================修改yarn源加速国内安装==================="
+    yarnSources
+else
+    echo "===================不修改yarn源==================="
+fi
 # 修改数据库配置文件
 echo "===================修改数据库配置文件==================="
 echo "[mysqld]" >> /etc/mysql/my.cnf
@@ -89,33 +113,17 @@ service mysql restart
 # 授权远程访问并修改密码
 echo "===================修改数据库root本地访问密码==================="
 mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
-# echo "===================修改数据库root远程访问密码==================="
-# mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
+echo "===================修改数据库root远程访问密码==================="
+mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 echo "===================数据库配置完成==================="
-# 安装nodejs
-echo "===================安装nodejs==================="
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-apt install -y nodejs
-# 修改npm源
-if [ $1 == "cnMirror" ];then
-    echo "===================修改npm源加速国内安装==================="
-    npmSources
-else
-    echo "===================不修改npm源==================="
-fi
-# 升级npm
-echo "===================升级npm==================="
-npm install -g npm
-# 安装yarn
-echo "===================安装yarn==================="
-npm install -g yarn
-# 修改yarn源
-if [ $1 == "cnMirror" ];then
-    echo "===================修改yarn源加速国内安装==================="
-    yarnSources
-else
-    echo "===================不修改yarn源==================="
-fi
+# 清理垃圾,ERPNext安装完毕
+echo "===================清理垃圾,ERPNext安装完毕==================="
+apt clean
+apt autoremove
+rm -rf /var/lib/apt/lists/*
+pip cache purge
+npm cache clean --force
+yarn cache clean
 # 基础需求安装完毕。
 echo "===================基础需求安装完毕。==================="
 exit 0
