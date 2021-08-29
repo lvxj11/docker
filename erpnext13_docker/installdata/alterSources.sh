@@ -8,6 +8,7 @@ aptSources() {
     echo 'deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-updates main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-backports main restricted universe multiverse' >> /etc/apt/sources.list
     echo 'deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-security main restricted universe multiverse' >> /etc/apt/sources.list
+    echo "===================apt已修改为国内源==================="
 }
 # 修改pip源
 pipSources() {
@@ -17,11 +18,13 @@ pipSources() {
     echo 'index-url = https://mirrors.aliyun.com/pypi/simple' >> /root/.pip/pip.conf
     echo '[install]' >> /root/.pip/pip.conf
     echo 'trusted-host = mirrors.aliyun.com' >> /root/.pip/pip.conf
+    echo "===================pip已修改为国内源==================="
 }
 # 修改npm源
 npmSources() {
     # 在执行前确定有操作权限
     npm config set registry https://registry.npm.taobao.org
+    echo "===================npm已修改为国内源==================="
 }
 # 修改yarn源
 yarnSources() {
@@ -33,6 +36,7 @@ yarnSources() {
     yarn config set sqlite3_binary_host_mirror "https://foxgis.oss-cn-shanghai.aliyuncs.com/"
     yarn config set profiler_binary_host_mirror "https://npm.taobao.org/mirrors/node-inspector/"
     yarn config set chromedriver_cdnurl "https://cdn.npm.taobao.org/dist/chromedriver"
+    echo "===================yarn已修改为国内源==================="
 }
 if [ "$(echo $* |grep -o apt)" == "apt" ];then
     aptSources
