@@ -77,21 +77,18 @@ alias python=python3
 alias pip=pip3
 # 修改数据库配置文件
 echo "===================修改数据库配置文件==================="
-echo "[mysqld]" > /etc/mysql/conf.d/frappe.cnf
-echo "character-set-client-handshake = FALSE" >> /etc/mysql/conf.d/frappe.cnf
-echo "character-set-server = utf8mb4" >> /etc/mysql/conf.d/frappe.cnf
-echo "collation-server = utf8mb4_unicode_ci" >> /etc/mysql/conf.d/frappe.cnf
-echo "bind-address = 0.0.0.0" >> /etc/mysql/conf.d/frappe.cnf
-# echo "skip-name-resolve = 1" >> /etc/mysql/conf.d/frappe.cnf
-echo "" >> /etc/mysql/conf.d/frappe.cnf
-echo "[mysql]" >> /etc/mysql/conf.d/frappe.cnf
-echo "default-character-set = utf8mb4" >> /etc/mysql/conf.d/frappe.cnf
-echo "" >> /etc/mysql/conf.d/frappe.cnf
+echo "[mysqld]" >> /etc/mysql/my.cnf
+echo "character-set-client-handshake = FALSE" >> /etc/mysql/my.cnf
+echo "character-set-server = utf8mb4" >> /etc/mysql/my.cnf
+echo "collation-server = utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
+echo "bind-address = 0.0.0.0" >> /etc/mysql/my.cnf
+echo "" >> /etc/mysql/my.cnf
+echo "[mysql]" >> /etc/mysql/my.cnf
+echo "default-character-set = utf8mb4" >> /etc/mysql/my.cnf
 service mysql restart
 # 授权远程访问并修改密码
 mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
-# mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
-# mysqladmin -u root -h 127.0.0.1 -p${MARIADB_ROOT_PASSWORD} password ${MARIADB_ROOT_PASSWORD}
+mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 # 安装nodejs
 echo "===================安装nodejs==================="
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
