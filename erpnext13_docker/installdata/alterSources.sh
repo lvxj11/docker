@@ -34,3 +34,21 @@ yarnSources() {
     yarn config set profiler_binary_host_mirror "https://npm.taobao.org/mirrors/node-inspector/"
     yarn config set chromedriver_cdnurl "https://cdn.npm.taobao.org/dist/chromedriver"
 }
+if [ "$(echo $* |grep -o apt)" == "apt" ];then
+    aptSources
+fi
+if [ "$(echo $* |grep -o pip)" == "pip" ];then
+    pipSources
+fi
+if [ "$(echo $* |grep -o npm)" == "npm" ];then
+    npmSources
+fi
+if [ "$(echo $* |grep -o yarn)" == "yarn" ];then
+    yarnSources
+fi
+if [ "$(echo $* |grep -o all)" == "all" ];then
+    aptSources
+    pipSources
+    npmSources
+    yarnSources
+fi

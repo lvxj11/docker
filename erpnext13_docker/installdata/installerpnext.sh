@@ -63,11 +63,8 @@ sudo chown -R frappe:frappe /home/frappe/frappe-bench/*
 # 修改安装源为国内源
 if [ "$(echo $* |grep -o cnMirror)" == "cnMirror" ];then
     echo "===================修改安装源为国内源==================="
-    sudo -H aptSources
-    sudo -H pipSources
+    sudo /installdata/alterSources.sh all
     cp -af /root/.pip /home/frappe/
-    sudo -H npmSources
-    sudo -H yarnSources
 fi
 # 清理垃圾,ERPNext安装完毕
 echo "===================清理垃圾,ERPNext安装完毕==================="
