@@ -110,17 +110,15 @@ echo "bind-address = 0.0.0.0" >> /etc/mysql/my.cnf
 echo "" >> /etc/mysql/my.cnf
 echo "[mysql]" >> /etc/mysql/my.cnf
 echo "default-character-set = utf8mb4" >> /etc/mysql/my.cnf
-service mysql restart
+/etc/init.d/mysql restart
 # 授权远程访问并修改密码
-# echo "===================修改数据库root本地访问密码==================="
-# mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
-# echo "===================修改数据库root远程访问密码==================="
-# mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
-# mysql -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 echo "===================修改数据库root本地访问密码==================="
 mysqladmin -v -uroot password ${MARIADB_ROOT_PASSWORD}
+echo "===================修改数据库root远程访问密码==================="
+mysql -u root -p${MARIADB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}' WITH GRANT OPTION;"
 echo "===================刷新权限表==================="
 mysqladmin -v -uroot -p${MARIADB_ROOT_PASSWORD} reload
+sed -i 's/^password.*$/password = '"${MARIADB_ROOT_PASSWORD}"'/' /etc/mysql/debian.cnf
 echo "===================数据库配置完成==================="
 # 清理垃圾
 echo "===================清理垃圾==================="
