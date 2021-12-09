@@ -17,7 +17,8 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     sudo \
     wget \
     curl \
-    python3 \
+    python3-dev \
+    python3-setuptools \
     python3-pip \
     locales \
     tzdata \
@@ -26,7 +27,8 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     software-properties-common \
     mariadb-server-10.3 \
     mariadb-client \
-    python3-mysqldb \
+    libmysqlclient-dev \
+    virtualenv \
     redis-server 
 # 安装wkhtmltox
 echo "===================安装wkhtmltox==================="
