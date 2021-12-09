@@ -51,9 +51,9 @@ bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password
 echo "===================安装erpnext应用到新网站==================="
 bench --site site1.local install-app erpnext
 # 安装中文本地化
-echo "===================安装中文本地化==================="
-bench get-app https://gitee.com/yuzelin/erpnext_oob.git
-bench --site site1.local install-app erpnext_oob
+# echo "===================安装中文本地化==================="
+# bench get-app https://gitee.com/yuzelin/erpnext_oob.git
+# bench --site site1.local install-app erpnext_oob
 # 设置网站超时时间
 echo "===================设置网站超时时间==================="
 bench config http_timeout 6000
