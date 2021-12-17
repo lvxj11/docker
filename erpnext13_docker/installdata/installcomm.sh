@@ -80,7 +80,7 @@ alias python=python3
 alias pip=pip3
 # 安装nodejs
 echo "===================安装nodejs==================="
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 apt install -y nodejs
 # 修改npm源
 if [ "$1" == "cnMirror" ];then
