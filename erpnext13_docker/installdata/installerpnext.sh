@@ -18,7 +18,7 @@ sudo service redis-server restart
 sudo service mysql restart
 # 安装bench
 echo "===================安装bench==================="
-sudo -H pip3 install frappe-bench
+sudo -H pip3 install frappe-bench==5.6.0
 # 测试bench安装
 echo "===================测试bench安装是否成功，如显示版本号为成功如“5.2.1”，否则安装失败。==================="
 bench --version
@@ -51,9 +51,11 @@ bench new-site --mariadb-root-password ${MARIADB_ROOT_PASSWORD} --admin-password
 echo "===================安装erpnext应用到新网站==================="
 bench --site site1.local install-app erpnext
 # 安装中文本地化
-# echo "===================安装中文本地化==================="
-# bench get-app https://gitee.com/yuzelin/erpnext_oob.git
-# bench --site site1.local install-app erpnext_oob
+echo "===================安装中文本地化==================="
+bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
+bench --site site1.local install-app erpnext_chinese
+bench get-app https://gitee.com/yuzelin/erpnext_oob.git
+bench --site site1.local install-app erpnext_oob
 # 设置网站超时时间
 echo "===================设置网站超时时间==================="
 bench config http_timeout 6000
