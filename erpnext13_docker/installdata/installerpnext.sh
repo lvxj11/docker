@@ -18,7 +18,7 @@ sudo service redis-server restart
 sudo service mysql restart
 # 安装bench
 echo "===================安装bench==================="
-sudo -H pip3 install frappe-bench==5.6.0
+sudo -H pip3 install frappe-bench
 # 测试bench安装
 echo "===================测试bench安装是否成功，如显示版本号为成功如“5.2.1”，否则安装失败。==================="
 bench --version
