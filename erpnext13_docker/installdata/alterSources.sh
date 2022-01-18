@@ -23,19 +23,19 @@ pipSources() {
 # 修改npm源
 npmSources() {
     # 在执行前确定有操作权限
-    npm config set registry https://registry.npm.taobao.org
+    npm config set registry https://registry.npmmirror.com -g
     echo "===================npm已修改为国内源==================="
 }
 # 修改yarn源
 yarnSources() {
     # 在执行前确定有操作权限
-    yarn config set registry https://registry.npm.taobao.org
-    yarn config set sass_binary_site "https://npm.taobao.org/mirrors/node-sass/"
-    yarn config set phantomjs_cdnurl "http://cnpmjs.org/downloads"
-    yarn config set electron_mirror "https://npm.taobao.org/mirrors/electron/"
-    yarn config set sqlite3_binary_host_mirror "https://foxgis.oss-cn-shanghai.aliyuncs.com/"
-    yarn config set profiler_binary_host_mirror "https://npm.taobao.org/mirrors/node-inspector/"
-    yarn config set chromedriver_cdnurl "https://cdn.npm.taobao.org/dist/chromedriver"
+    yarn config set registry https://registry.npm.taobao.org --global
+    yarn config set sass_binary_site "https://cdn.npm.taobao.org/dist/node-sass/" --global
+    # yarn config set phantomjs_cdnurl "http://cnpmjs.org/downloads" --global
+    # yarn config set electron_mirror "https://npm.taobao.org/mirrors/electron/" --global
+    # yarn config set sqlite3_binary_host_mirror "https://foxgis.oss-cn-shanghai.aliyuncs.com/" --global
+    # yarn config set profiler_binary_host_mirror "https://npm.taobao.org/mirrors/node-inspector/" --global
+    # yarn config set chromedriver_cdnurl "https://cdn.npm.taobao.org/dist/chromedriver" --global
     echo "===================yarn已修改为国内源==================="
 }
 if [ "$(echo $* |grep -o apt)" == "apt" ];then
