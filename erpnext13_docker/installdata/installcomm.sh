@@ -58,6 +58,8 @@ else
 fi
 # 修正用户目录权限
 chown -R frappe.frappe /home/frappe
+# 修正用户shell
+usermod -s /bin/bash frappe
 # 设置语言环境
 echo "===================设置语言环境==================="
 sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
