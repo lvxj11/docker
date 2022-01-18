@@ -80,10 +80,17 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade setuptools cryptography psutil
 alias python=python3
 alias pip=pip3
-# 安装nodejs
-echo "===================安装nodejs==================="
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-apt install -y nodejs
+# 获取最新版nodejs-v14，并安装
+nodejs0=$(curl -sL https://nodejs.org/download/release/latest-v14.x/ | grep -o node-v14.*-linux-x64.tar.xz)
+nodejs1=${nodejs0%%.tar*}
+echo "==========即将安装nodejs到/usr/local/lib/nodejs/${nodejs1}=========="
+wget https://nodejs.org/download/release/latest-v14.x/${nodejs1}.tar.xz -P /tmp/
+mkdir -p /usr/local/lib/nodejs
+tar -xJf /tmp/${nodejs1}.tar.xz -C /usr/local/lib/nodejs/
+echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
+echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> ~/.bashrc
+export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:$PATH
+source /etc/profile
 # 修改npm源
 if [ "$1" == "cnMirror" ];then
     echo "===================修改npm源加速国内安装==================="
