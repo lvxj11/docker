@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+# 修正环境变量
+source /etc/profile
 # 修改apt源
 aptSources() {
     # 在执行前确定有操作权限
