@@ -7,6 +7,7 @@ echo "===================配置运行环境变量==================="
 cd ~
 alias python=python3
 alias pip=pip3
+source /etc/profile
 echo "export PATH=/home/frappe/.local/bin:\$PATH" >> ~/.bashrc
 export PATH=/home/frappe/.local/bin:$PATH
 export LC_ALL=en_US.UTF-8
@@ -27,7 +28,7 @@ echo "===================初始化frappe==================="
 # 如果有"fromGitee"参数则添加Gitee仓库地址。
 if [ "$(echo $* |grep -o fromGitee)" == "fromGitee" ];then
     echo "===================从Gitee仓库拉取==================="
-    bench init --frappe-branch version-13 --python /usr/bin/python3 --ignore-exist frappe-bench --frappe-path=https://gitee.com/qinyanwan/frappe
+    bench init --frappe-branch version-13 --python /usr/bin/python3 --ignore-exist frappe-bench --frappe-path=https://gitee.com/mirrors/frappe
 else
     echo "===================从官方仓库拉取==================="
     bench init --frappe-branch version-13 --python /usr/bin/python3 --ignore-exist frappe-bench
@@ -38,7 +39,7 @@ cd ~/frappe-bench
 # 如果有"fromGitee"参数则添加Gitee仓库地址。
 if [ "$(echo $* |grep -o fromGitee)" == "fromGitee" ];then
     echo "===================从Gitee仓库拉取==================="
-    bench get-app --branch version-13 erpnext https://gitee.com/qinyanwan/erpnext
+    bench get-app --branch version-13 https://gitee.com/mirrors/erpnext
 else
     echo "===================从官方仓库拉取==================="
     bench get-app --branch version-13 https://github.com/frappe/erpnext
@@ -74,8 +75,8 @@ sudo -H apt clean
 sudo -H apt autoremove
 sudo -H rm -rf /var/lib/apt/lists/*
 sudo -H pip cache purge
-sudo -H npm cache clean --force
-sudo -H yarn cache clean
+npm cache clean --force
+yarn cache clean
 # 确认安装
 echo "===================确认安装==================="
 bench version
