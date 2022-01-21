@@ -16,7 +16,7 @@ erpnextBranch="version-13"
 # 是否修改apt安装源，如果是云服务器建议不修改。
 altAptSources="yes"
 # 是否跳过确认参数直接安装
-quiet="no"
+quiet="yes"
 # 遍历参数修改默认值
 echo "===================获取参数==================="
 for arg in $*
