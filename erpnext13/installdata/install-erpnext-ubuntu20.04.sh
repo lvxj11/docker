@@ -321,12 +321,15 @@ bench --site site1.local install-app erpnext
 # 设置网站超时时间
 echo "===================设置网站超时时间==================="
 bench config http_timeout 6000
-# 安装中文本地化,由于bench程序bug暂时注释掉。
+# 安装中文本地化
 echo "===================安装中文本地化==================="
 bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
 bench --site site1.local install-app erpnext_chinese
 bench get-app https://gitee.com/yuzelin/erpnext_oob.git
 bench --site site1.local install-app erpnext_oob
+echo "===================安装权限优化==================="
+bench get-app https://gitee.com/yuzelin/zelin_permission.git
+bench --site site1.local install-app zelin_permission
 # 群主推荐的自定义模块
 # echo "===================安装群主推荐的自定义模块==================="
 # bench get-app https://github.com/bhavesh95863/whitelabel
