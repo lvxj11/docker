@@ -321,6 +321,9 @@ bench --site site1.local install-app erpnext
 # 设置网站超时时间
 echo "===================设置网站超时时间==================="
 bench config http_timeout 6000
+# 开启默认站点并设置site1.local为默认站点
+bench config serve_default_site on
+bench use site1.local
 # 安装中文本地化
 echo "===================安装中文本地化==================="
 bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
