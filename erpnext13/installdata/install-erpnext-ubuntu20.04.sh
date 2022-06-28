@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-# 只适用于纯净版ubuntu20.04，其他系统请自行重新适配。
+# 只适用于纯净版ubuntu20.04并使用root用户运行，其他系统请自行重新适配。
 # 会安装mariadb10.3，redis以及erpnext的其他系统需求。
 # 设定参数，已设定常用的默认值。如果你不知道干嘛的就别改了。
 # 自定义选项使用方法例：./install.erpnext.sh benchVersion=5.6.0 frappePath=https://gitee.com/mirrors/frappe branch=version-13
@@ -16,7 +16,7 @@ erpnextBranch="version-13"
 # 是否修改apt安装源，如果是云服务器建议不修改。
 altAptSources="yes"
 # 是否跳过确认参数直接安装
-quiet="yes"
+quiet="no"
 # 遍历参数修改默认值
 echo "===================获取参数==================="
 for arg in $*
@@ -184,39 +184,56 @@ alias python=python3
 alias pip=pip3
 # 安装wkhtmltox
 echo "===================安装wkhtmltox==================="
-# wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
-wget https://gitee.com/lvxj11/wkhtmltopdf/attach_files/941684/download/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
+if [[ $altAptSources != "yes" ]];then
+    wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
+else
+    wget https://gitee.com/lvxj11/wkhtmltopdf/attach_files/941684/download/wkhtmltox_0.12.6-1.focal_amd64.deb -P /tmp/
+fi
 apt install -y /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 rm -f /tmp/wkhtmltox_0.12.6-1.focal_amd64.deb
 wkhtmltopdf -V
 # 建立新用户组和用户
 echo "===================建立新用户组和用户==================="
-gid=1000
-while true
-do
-    result=$(grep ":${gid}:" /etc/group || true)
-    if [[ "$result" == "" ]]
-    then
-        echo "建立新用户组: ${gid}:frappe"
-        groupadd -g ${gid} frappe
-        break
-    fi
-    gid=$(expr ${gid} + 1)
-    echo "gid: ${gid}"
-done
-uid=1000
-while true
-do
-    result=$(grep ":x:${uid}:" /etc/passwd || true)
-    if [[ "$result" == "" ]]
-    then
-        echo "建立新用户: ${uid}:frappe"
-        useradd --no-log-init -r -m -u ${uid} -g ${gid} -G  sudo frappe
-        break
-    fi
-    uid=$(expr ${uid} + 1)
-    echo "uid: ${uid}"
-done
+result=$(grep "frappe:" /etc/group || true)
+if [[ "$result" == "" ]]
+then
+    gid=1000
+    while true
+    do
+        result=$(grep ":${gid}:" /etc/group || true)
+        if [[ "$result" == "" ]]
+        then
+            echo "建立新用户组: ${gid}:frappe"
+            groupadd -g ${gid} frappe
+            echo "已新建用户组frappe，gid: ${gid}"
+            break
+        else
+            gid=$(expr ${gid} + 1)
+        fi
+    done
+else
+    echo '用户组已存在'
+fi
+result=$(grep "frappe:" /etc/passwd || true)
+if [[ "$result" == "" ]]
+then
+    uid=1000
+    while true
+    do
+        result=$(grep ":x:${uid}:" /etc/passwd || true)
+        if [[ "$result" == "" ]]
+        then
+            echo "建立新用户: ${uid}:frappe"
+            useradd --no-log-init -r -m -u ${uid} -g ${gid} -G  sudo frappe
+            echo "已新建用户frappe，uid: ${uid}"
+            break
+        else
+            uid=$(expr ${uid} + 1)
+        fi
+    done
+else
+    echo '用户已存在'
+fi
 echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/frappe
 echo "export PATH=/home/frappe/.local/bin:\$PATH" >> /home/frappe/.bashrc
@@ -239,17 +256,30 @@ dpkg-reconfigure -f noninteractive tzdata
 # 设置监控文件数量上限
 echo "===================设置监控文件数量上限==================="
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
-# 获取最新版nodejs-v14，并安装
-nodejs0=$(curl -sL https://nodejs.org/download/release/latest-v14.x/ | grep -o node-v14.*-linux-x64.tar.xz)
-nodejs1=${nodejs0%%.tar*}
-echo "==========即将安装nodejs到/usr/local/lib/nodejs/${nodejs1}=========="
-wget https://nodejs.org/download/release/latest-v14.x/${nodejs1}.tar.xz -P /tmp/
-mkdir -p /usr/local/lib/nodejs
-tar -xJf /tmp/${nodejs1}.tar.xz -C /usr/local/lib/nodejs/
-echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
-echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> ~/.bashrc
-export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:$PATH
-source /etc/profile
+# 检查是否安装nodejs14
+if ! type node >/dev/null 2>&1; then
+    # 获取最新版nodejs-v14，并安装
+    echo "==========获取最新版nodejs-v14，并安装=========="
+    nodejs0=$(curl -sL https://nodejs.org/download/release/latest-v14.x/ | grep -o node-v14.*-linux-x64.tar.xz)
+    nodejs1=${nodejs0%%.tar*}
+    echo "nodejs14最新版本为：${nodejs1}"
+    echo "即将安装nodejs14到/usr/local/lib/nodejs/${nodejs1}"
+    wget https://nodejs.org/download/release/latest-v14.x/${nodejs1}.tar.xz -P /tmp/
+    mkdir -p /usr/local/lib/nodejs
+    tar -xJf /tmp/${nodejs1}.tar.xz -C /usr/local/lib/nodejs/
+    echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
+    echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> ~/.bashrc
+    export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:$PATH
+    source /etc/profile
+else
+    result=$(node -v | grep "v14." || true)
+    if [[ "$result" == "" ]]
+    then
+        echo '==========已存在node，但不是v14版。这将有可能导致一些问题。建议卸载node后重试。=========='
+    else
+        echo '==========已存在nodejs14，跳过安装=========='
+    fi
+fi
 # 修改npm源
 npmSources
 # 升级npm
