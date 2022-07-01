@@ -1,5 +1,5 @@
 # erpnext
-FROM ubuntu:20.04
+FROM lvxj11/erpnext:latest
 LABEL author=lvxj11
 
 # 设定参数
