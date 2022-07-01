@@ -24,4 +24,4 @@ VOLUME /var/lib/mysql
 STOPSIGNAL SIGTERM
 
 ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["/installdata/start.sh"]
+CMD ["supervisor", "-c", "/etc/supervisor/supervisord.conf"]
