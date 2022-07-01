@@ -23,5 +23,5 @@ VOLUME /var/lib/mysql
 
 STOPSIGNAL SIGTERM
 
-# ENTRYPOINT ["bash"]
+ENTRYPOINT ["bash", "-c"]
 CMD ["/installdata/start.sh"]
