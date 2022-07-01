@@ -10,13 +10,13 @@ ENV ADMIN_PASSWORD=admin
 COPY ./installdata /installdata
 
 # 运行基础软件安装脚本。
-RUN chmod -R 777 /installdata/* && /installdata/install-erpnext-ubuntu20.04.sh quiet=yes
+RUN chmod -R 777 /installdata/* && /installdata/toproduction.sh
 
 # 切换用户
 USER frappe
 WORKDIR /home/frappe/frappe-bench
 
-EXPOSE 3306 8000
+EXPOSE 80
 
 VOLUME /home/frappe/frappe-bench/sites
 VOLUME /var/lib/mysql
