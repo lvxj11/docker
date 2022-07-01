@@ -6,6 +6,6 @@ DEBIAN_FRONTEND=noninteractive sudo apt upgrade -y
 DEBIAN_FRONTEND=noninteractive sudo apt install -y supervisor
 sudo supervisor -c "/etc/supervisor/supervisord.conf"
 cd ~/frappe-bench
-sudo bench setup production frappe
+sudo bench setup production frappe --yes
 bench doctor
 bench version
