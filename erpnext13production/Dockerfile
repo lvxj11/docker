@@ -12,7 +12,7 @@ RUN /bin/bash -c 'set -ex; \
     sudo apt update; \
     f="/usr/local/lib/python3.8/dist-packages/bench/config/supervisor.py"; \
     n=$(sed -n "/service.*supervisor.*reload/=" ${f}); \
-    if ${n}; then sudo sed -i "${n} s/reload/restart/g" ${f}; fi; \
+    if [ ${n} ]; then sudo sed -i "${n} s/reload/restart/g" ${f}; fi; \
     cd ~/frappe-bench; \
     f="/etc/supervisor/conf.d/frappe-bench.conf"; \
     while [ ! -e ${f} ]; do sudo bench setup production frappe --yes; done; \
