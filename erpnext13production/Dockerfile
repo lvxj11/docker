@@ -2,15 +2,14 @@
 FROM lvxj11/erpnext:latest
 LABEL author=lvxj11
 
-# 设定参数
-ENV MARIADB_ROOT_PASSWORD=Pass1234
-ENV ADMIN_PASSWORD=admin
-
-# 拷贝基础软件安装脚本
-COPY ./installdata /installdata
-
-# 运行基础软件安装脚本。
-RUN sudo chmod -R 777 /installdata/* && /installdata/toproduction.sh
+# 开始安装
+RUN /bin/bash -c "sudo set -e && \
+    sudo apt update && \
+    DEBIAN_FRONTEND=noninteractive sudo apt upgrade -y && \
+    cd ~/frappe-bench && \
+    sudo bench setup production frappe --yes && \
+    bench doctor && \
+    bench version"
 
 # 切换用户
 USER frappe
