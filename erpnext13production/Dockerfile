@@ -39,7 +39,7 @@ RUN /bin/bash -c 'set -ex; \
     echo "stdout_logfile=/var/run/log/mysql.log" >> /home/frappe/frappe-bench/config/supervisor/mysql.conf; \
     sudo ln -s /home/frappe/frappe-bench/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf; \
     echo "[program: nginx]" > /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
-    t="daemon off;"
+    t="daemon off;"; \
     echo "command=/usr/sbin/nginx -g ${t}" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "autorestart=true" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "autostart=true" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
