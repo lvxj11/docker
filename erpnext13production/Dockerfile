@@ -8,10 +8,10 @@ USER frappe
 WORKDIR /home/frappe/frappe-bench
 
 # 开始安装
-RUN /bin/bash -c "sudo set -e && \
+RUN /bin/bash -c 'sudo set -e && \
     sudo apt update && \
     cd ~/frappe-bench && \
-    bench version"
+    bench version'
 
 # 开放端口
 EXPOSE 80
