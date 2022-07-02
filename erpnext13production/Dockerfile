@@ -10,7 +10,7 @@ ENV ADMIN_PASSWORD=admin
 COPY ./installdata /installdata
 
 # 运行基础软件安装脚本。
-RUN chmod -R 777 /installdata/* && /installdata/toproduction.sh
+RUN sudo chmod -R 777 /installdata/* && /installdata/toproduction.sh
 
 # 切换用户
 USER frappe
