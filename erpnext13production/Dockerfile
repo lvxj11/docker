@@ -8,7 +8,8 @@ USER frappe
 WORKDIR /home/frappe/frappe-bench
 
 # 开始安装
-RUN /bin/bash -c 'apt update; \
+RUN /bin/bash -c 'set -ex; \
+    apt update; \
     f="/usr/local/lib/python3.8/dist-packages/bench/config/supervisor.py"; \
     n=$(sed -n "/service.*supervisor.*reload/=" ${f}); \
     if ${n}; then sudo sed -i "${n} s/reload/restart/g" ${f}; fi; \
