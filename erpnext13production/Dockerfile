@@ -10,10 +10,7 @@ WORKDIR /home/frappe/frappe-bench
 # 开始安装
 RUN /bin/bash -c "sudo set -e && \
     sudo apt update && \
-    DEBIAN_FRONTEND=noninteractive sudo apt upgrade -y && \
     cd ~/frappe-bench && \
-    sudo bench setup production frappe --yes && \
-    bench doctor && \
     bench version"
 
 # 开放端口
@@ -28,4 +25,4 @@ STOPSIGNAL SIGTERM
 
 #设定入口指令
 ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["sudo", "supervisor", "-c", "/etc/supervisor/supervisord.conf"]
+CMD ["sudo supervisord -c /etc/supervisor/supervisord.conf"]
