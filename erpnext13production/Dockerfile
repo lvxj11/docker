@@ -8,9 +8,9 @@ USER frappe
 WORKDIR /home/frappe/frappe-bench
 
 # 开始安装
-RUN /bin/bash -c 'set -ex; \
-    apt update; \
-    apt upgrade -y; \
+RUN /bin/bash -c 'echo "1"; \
+    echo "2"; \
+    echo "3"; \
     echo "OK"'
 
 # 开放端口
