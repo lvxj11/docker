@@ -43,8 +43,8 @@ RUN /bin/bash -c 'set -ex; \
     echo "command=/usr/sbin/nginx -g ${t}" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "autorestart=true" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "autostart=true" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
-    echo "stderr_logfile=/home/work/super/error.log" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
-    echo "stdout_logfile=/home/work/super/stdout.log" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
+    echo "stderr_logfile=/var/run/log/nginx_error.log" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
+    echo "stdout_logfile=/var/run/log/nginx_stdout.log" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "user=root" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
     echo "stopsignal=INT" >> /home/frappe/frappe-bench/config/supervisor/nginx.conf; \
