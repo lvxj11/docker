@@ -65,4 +65,4 @@ STOPSIGNAL SIGTERM
 
 #设定入口指令
 ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["sudo supervisord -c /etc/supervisor/supervisord.conf", "while true;do sleep 60;done"]
+CMD ["sudo supervisord -n -c /etc/supervisor/supervisord.conf"]
