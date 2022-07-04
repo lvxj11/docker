@@ -805,9 +805,19 @@ if [[ ${productionMode} == "yes" ]]; then
         echo "尝试开启生产模式..."
         set +e
         sudo bench setup production ${userName} --yes
+        err=$?
         set -e
-        i++
+        i=i+1
+        if [[ \${err} == 0 ]]; then
+            echo "==========开启生产模式执行完毕\${i}，自动检查是否成功生成配置文件。=========="
+        elif [[ \${i} -ge 9 ]]; then
+            echo "==========开启生产模式失败太多\${i}，退出脚本！=========="
+            exit 1
+        else
+            echo "==========开启生产模式失败第"\${i}"次！自动重试。=========="
+        fi
     done
+    echo "已开启生产模式\${i}..."
 fi
 # 清理工作台
 echo "===================清理工作台==================="
