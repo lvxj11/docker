@@ -807,7 +807,7 @@ if [[ ${productionMode} == "yes" ]]; then
         sudo bench setup production ${userName} --yes
         err=$?
         set -e
-        i=i+1
+        let i++
         if [[ \${err} == 0 ]]; then
             echo "==========开启生产模式执行完毕\${i}，自动检查是否成功生成配置文件。=========="
         elif [[ \${i} -ge 9 ]]; then
