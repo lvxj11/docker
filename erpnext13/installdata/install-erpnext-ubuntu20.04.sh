@@ -676,14 +676,14 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "redirect_stderr=true" >> ${configFile}
     echo "stdout_logfile_maxbytes=1024MB" >> ${configFile}
     echo "stdout_logfile_backups=10" >> ${configFile}
-    echo "stdout_logfile=/var/run/log/mysql.log" >> ${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${configFile}
     configFile=/etc/supervisor/conf.d/nginx.conf
     echo "[program: nginx]" > ${configFile}
     echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${configFile}
     echo "autorestart=true" >> ${configFile}
     echo "autostart=true" >> ${configFile}
-    echo "stderr_logfile=/home/work/super/error.log" >> ${configFile}
-    echo "stdout_logfile=/home/work/super/stdout.log" >> ${configFile}
+    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> ${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> ${configFile}
     echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> ${configFile}
     echo "user=root" >> ${configFile}
     echo "stopsignal=INT" >> ${configFile}
@@ -789,21 +789,35 @@ if [[ ${productionMode} == "yes" ]]; then
         echo "可用的supervisor重启指令为："${supervisorCommand}
         # 确认bensh脚本使用supervisor指令代码行
         f="/usr/local/lib/python3.8/dist-packages/bench/config/supervisor.py"
-        n=\$(sed -n "/service.*supervisor.*(reload|restart)/=" \${f})
+        n=\$(sed -n "/service.*supervisor.*reload\|service.*supervisor.*restart/=" \${f})
         # 如找到替换为可用指令
         if [ \${n} ]; then
             echo "替换bensh脚本supervisor重启指令为："${supervisorCommand}
-            sudo sed -i "\${n} s/(reload|restart)/${supervisorCommand}/g" \${f}
+            sudo sed -i "\${n} s/reload\|restart/${supervisorCommand}/g" \${f}
         fi
     fi
     # 准备执行开启生产模式脚本
     # 监控是否生成frappe配置文件，没有则重复执行。
     # 开启初始化时如果之前supervisor没有安装或安装失败会再次尝试安装。但可能因为没有修改为正确的重启指令不能重启。
     f="/etc/supervisor/conf.d/${installDir}.conf"
-    while [[ ! -e \${f} ]]; do
+    i=0
+    while [[ (! -e \${f}) && (i -lt 9) ]]; do
         echo "尝试开启生产模式..."
+        set +e
         sudo bench setup production ${userName} --yes
+        err=$?
+        set -e
+        i=i+1
+        if [[ \${err} == 0 ]]; then
+            echo "==========开启生产模式执行完毕\${i}，自动检查是否成功生成配置文件。=========="
+        elif [[ \${i} -ge 9 ]]; then
+            echo "==========开启生产模式失败太多\${i}，退出脚本！=========="
+            exit 1
+        else
+            echo "==========开启生产模式失败第"\${i}"次！自动重试。=========="
+        fi
     done
+    echo "已开启生产模式\${i}..."
 fi
 # 清理工作台
 echo "===================清理工作台==================="
