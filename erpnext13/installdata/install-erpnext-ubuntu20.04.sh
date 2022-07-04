@@ -653,9 +653,10 @@ echo "===================刷新权限表==================="
 mysqladmin -v -uroot -p${mariadbRootPassword} reload
 sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
 echo "===================数据库配置完成==================="
-# 如果在docker里安装，生成mariadb和nginx的supervisor配置文件。
-echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
+# 适配docker
 if [[ ${inDocker} == "yes" ]]; then
+    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
+    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
     configFile=/etc/supervisor/conf.d/mysql.conf
     echo "[program:mariadb]" > ${configFile}
     echo "command=/usr/sbin/mysqld \
@@ -725,6 +726,21 @@ if type bench >/dev/null 2>&1; then
 else
     echo "==========bench安装失败退出脚本！=========="
     exit 1
+fi
+# bensh脚本适配docker
+if [[ ${inDocker} == "yes" ]]; then
+    # 修改bensh脚本不安装fail2ban
+    echo "已配置在docker中运行，将注释安装fail2ban的代码。"
+    # 确认bensh脚本使用supervisor指令代码行
+    f="/usr/local/lib/python3.8/dist-packages/bench/config/production_setup.py"
+    n=\$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" \${f})
+    # 如找到代码注释判断行及执行行
+    if [ \${n} ]; then
+        echo "找到fail2ban安装代码行，添加注释符。"
+        sudo sed -i "\${n} s/^/#&/" \${f}
+        let n++
+        sudo sed -i "\${n} s/^/#&/" \${f}
+    fi
 fi
 # 初始化frappe
 echo "===================初始化frappe==================="
@@ -803,6 +819,9 @@ if [[ ${productionMode} == "yes" ]]; then
     i=0
     while [[ (! -e \${f}) && (i -lt 9) ]]; do
         echo "尝试开启生产模式..."
+        sudo apt update
+        sudo apt install nginx -y
+        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
         set +e
         sudo bench setup production ${userName} --yes
         err=$?
