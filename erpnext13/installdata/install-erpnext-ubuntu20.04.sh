@@ -149,6 +149,7 @@ do
     fi
 done
 # 显示参数
+clear
 echo "数据库地址："${mariadbPath}
 echo "数据库端口："${mariadbPort}
 echo "数据库root用户密码："${mariadbRootPassword}
@@ -168,7 +169,6 @@ echo "是否为docker镜像内安装适配："${inDocker}
 echo "是否开启生产模式："${productionMode}
 # 等待确认参数
 if [[ ${quiet} != "yes" ]];then
-    clear
     echo "===================请确认已设定参数并选择安装方式==================="
     echo "1. 安装为开发模式"
     echo "2. 安装为生产模式"
@@ -774,12 +774,17 @@ if [[ ${productionMode} == "yes" ]]; then
     # 可能会自动安装一些软件，刷新软件库
     sudo apt update
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
+    echo "修正脚本代码..."
     if [[ ${supervisorCommand} != "" ]]; then
+        echo "可用的supervisor重启指令为："${supervisorCommand}
         # 确认bensh脚本使用supervisor指令代码行
         f="/usr/local/lib/python3.8/dist-packages/bench/config/supervisor.py"
         n=\$(sed -n "/service.*supervisor.*(reload|restart)/=" \${f})
         # 如找到替换为可用指令
-        if [ \${n} ]; then sudo sed -i "\${n} s/(reload|restart)/${supervisorCommand}/g" \${f}; fi
+        if [ \${n} ]; then
+            echo "替换bensh脚本supervisor重启指令为："${supervisorCommand}
+            sudo sed -i "\${n} s/(reload|restart)/${supervisorCommand}/g" \${f}
+        fi
     fi
     # 准备执行开启生产模式脚本
     # 监控是否生成frappe配置文件，没有则重复执行。
@@ -791,6 +796,7 @@ if [[ ${productionMode} == "yes" ]]; then
     done
 fi
 # 清理工作台
+echo "===================清理工作台==================="
 bench migrate
 bench restart
 bench clear-cache
@@ -806,6 +812,7 @@ sudo -H pip cache purge
 npm cache clean --force
 yarn cache clean
 # 确认安装
+clear
 echo "===================确认安装==================="
 bench version
 EOF
