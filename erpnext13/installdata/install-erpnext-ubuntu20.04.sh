@@ -1,5 +1,5 @@
 #!/bin/bash
-# v2.1 2022.07.04
+# v2.2 2022.07.04
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu20.04
@@ -7,6 +7,8 @@ osVer=$(cat /etc/os-release | grep 'Ubuntu 20.04' || true)
 if [[ ${osVer} == '' ]]; then
     echo '脚本只在ubuntu20.04版本测试通过。其它系统版本需要重新适配。退出安装。'
     exit 1
+else
+    echo '系统版本检测通过...'
 fi
 # 检测是否使用bash执行
 if [[ 1 == 1 ]]; then
@@ -19,6 +21,8 @@ fi
 if [ "$(id -u)" != "0" ]; then
    echo "脚本需要使用root用户执行"
    exit 1
+else
+    echo '执行用户检测通过...'
 fi
 # 设定参数默认值，如果你不知道干嘛的就别改。
 # 只适用于纯净版ubuntu20.04并使用root用户运行，其他系统请自行重新适配。
@@ -149,7 +153,9 @@ do
     fi
 done
 # 显示参数
-clear
+if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+    clear
+fi
 echo "数据库地址："${mariadbPath}
 echo "数据库端口："${mariadbPort}
 echo "数据库root用户密码："${mariadbRootPassword}
@@ -261,7 +267,9 @@ warnArr=()
 # 检测是否有之前安装的目录
 while [[ -d "/home/${userName}/${installDir}" ]]; do
     if [[ ${quiet} != "yes" ]];then
-        clear
+        if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+            clear
+        fi
         echo "检测到已存在安装目录：/home/${userName}/${installDir}"
         echo '1. 删除目录后继续安装。（推荐）'
         echo '2. 输入一个新的安装目录。'
@@ -335,7 +343,9 @@ do
     siteSha1=_${siteSha1:0:16}
     dbUser=$(mysql -u root -p${mariadbRootPassword} -e "use mysql;SELECT User,Host FROM user;" | grep ${siteSha1} || true)
     if [[ ${dbUser} != "" ]]; then
-        clear
+        if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+            clear
+        fi
         echo '当前站点名称：'${siteName}
         echo '生成的数据库及用户名为：'${siteSha1}
         echo '已存在同名数据库用户，请选择处理方式。'
@@ -812,7 +822,9 @@ sudo -H pip cache purge
 npm cache clean --force
 yarn cache clean
 # 确认安装
-clear
+if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+    clear
+fi
 echo "===================确认安装==================="
 bench version
 EOF
