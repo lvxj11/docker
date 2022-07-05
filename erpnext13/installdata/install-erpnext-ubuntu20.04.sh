@@ -181,10 +181,10 @@ if [[ ${quiet} != "yes" ]];then
     echo "3. 不再询问，按照当前设定安装并开启静默模式"
     echo "4. 在Docker镜像里安装并开启静默模式"
     echo "*. 取消安装"
-    echo -e "说明：开发模式需要手动启动“bench start”，启动后访问8000端口。\n \
+    echo -e "说明：开启静默模式后，如果有重名目录或数据库包括supervisor进程配置文件都将会删除后继续安装，请注意数据备份！ \n \
+        开发模式需要手动启动“bench start”，启动后访问8000端口。\n \
         生产模式无需手动启动，使用nginx反代并监听80端口\n \
         此外生产模式会使用supervisor管理进程增强可靠性，并预编译代码开启redis缓存，提高应用性能。\n \
-        开启静默模式后，如果有重名目录或数据库将会删除后继续安装，请注意数据备份！ \n \
         在Docker镜像里安装会适配其进程启动方式将mariadb及nginx进程也交给supervisor管理。 \n \
         docker镜像主线程：“sudo supervisord -n -c /etc/supervisor/supervisord.conf”。请自行配置到镜像"
     read -r -p "请选择： " input
@@ -247,7 +247,8 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     sudo \
     wget \
     curl \
-    python3-minimal \
+    python3.8-minimal \
+    python3.8-venv \
     python3-setuptools \
     python3-pip \
     python3-testresources \
@@ -266,18 +267,20 @@ rteArr=()
 warnArr=()
 # 检测是否有之前安装的目录
 while [[ -d "/home/${userName}/${installDir}" ]]; do
+    if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+        clear
+    fi
+    echo "检测到已存在安装目录：/home/${userName}/${installDir}"
     if [[ ${quiet} != "yes" ]];then
-        if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
-            clear
-        fi
-        echo "检测到已存在安装目录：/home/${userName}/${installDir}"
-        echo '1. 删除目录后继续安装。（推荐）'
+        echo '1. 删除后继续安装。（推荐）'
         echo '2. 输入一个新的安装目录。'
         read -r -p "*. 取消安装" input
         case ${input} in
             1)
                 echo "删除目录重新初始化！"
                 rm -rf /home/${userName}/${installDir}
+                rm -f /etc/supervisor/conf.d/${installDir}.conf
+                rm -f /etc/nginx/conf.d/${installDir}.conf
                 ;;
             2)
                 while true
@@ -335,6 +338,36 @@ else
     echo "==========MariaDB安装失败退出脚本！=========="
     exit 1
 fi
+# 修改数据库配置文件
+echo "===================修改数据库配置文件==================="
+echo "[mysqld]" >> /etc/mysql/my.cnf
+echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
+echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
+echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
+echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
+echo "" >> /etc/mysql/my.cnf
+echo "[mysql]" >> /etc/mysql/my.cnf
+echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
+/etc/init.d/mysql restart
+sleep 2
+# 授权远程访问并修改密码
+if mysql -uroot -e quit >/dev/null 2>&1
+then
+    echo "===================修改数据库root本地访问密码==================="
+    mysqladmin -v -uroot password ${mariadbRootPassword}
+elif mysql -uroot -p${mariadbRootPassword} -e quit >/dev/null 2>&1
+then
+    echo "===================数据库root本地访问密码已配置==================="
+else
+    echo "===================数据库root本地访问密码错误==================="
+    exit 1
+fi
+echo "===================修改数据库root远程访问密码==================="
+mysql -u root -p${mariadbRootPassword} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}' WITH GRANT OPTION;"
+echo "===================刷新权限表==================="
+mysqladmin -v -uroot -p${mariadbRootPassword} reload
+sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
+echo "===================数据库配置完成==================="
 # 检查数据库是否有同名用户。如有，选择处理方式。
 echo "==========检查数据库残留=========="
 while true
@@ -404,10 +437,13 @@ do
             ;;
         esac
     else
+        echo "无重名数据库或用户。"
         break
     fi
 done
-# 确认supervisor安装及，可用的重启指令
+# 确认可用的重启指令
+echo "确认supervisor可用重启指令。"
+supervisorCommand=""
 if type supervisord >/dev/null 2>&1; then
     if [[ $(grep -E "[ *]reload)" /etc/init.d/supervisor) != '' ]]; then
         supervisorCommand="reload"
@@ -417,14 +453,13 @@ if type supervisord >/dev/null 2>&1; then
         echo "/etc/init.d/supervisor中没有找到reload或restart指令"
         echo "将会继续执行，但可能因为使用不可用指令导致启动进程失败。"
         echo "如进程没有运行，请尝试手动重启supervisor"
-        supervisorCommand=""
         warnArr[${#warnArr[@]}]="没有找到可用的supervisor重启指令，如有进程启动失败，请尝试手动重启。"
     fi
 else
     echo "supervisor没有安装"
-    supervisorCommand=""
     warnArr[${#warnArr[@]}]="supervisor没有安装或安装失败，不能使用supervisor管理进程。"
 fi
+echo "可用指令："${supervisorCommand}
 # 安装最新版redis6.2
 # 检查是否安装redis
 if ! type redis-server >/dev/null 2>&1; then
@@ -624,78 +659,10 @@ npm install -g yarn
 # yarn config list
 yarn config set registry https://registry.npm.taobao.org --global
 echo "===================yarn已修改为国内源==================="
-# 修改数据库配置文件
-echo "===================修改数据库配置文件==================="
-echo "[mysqld]" >> /etc/mysql/my.cnf
-echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
-echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
-echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
-echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
-echo "" >> /etc/mysql/my.cnf
-echo "[mysql]" >> /etc/mysql/my.cnf
-echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
-/etc/init.d/mysql restart
-# 授权远程访问并修改密码
-if mysql -uroot -e quit >/dev/null 2>&1
-then
-    echo "===================修改数据库root本地访问密码==================="
-    mysqladmin -v -uroot password ${mariadbRootPassword}
-elif mysql -uroot -p${mariadbRootPassword} -e quit >/dev/null 2>&1
-then
-    echo "===================数据库root本地访问密码已配置==================="
-else
-    echo "===================数据库root本地访问密码错误==================="
-    exit 1
-fi
-echo "===================修改数据库root远程访问密码==================="
-mysql -u root -p${mariadbRootPassword} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}' WITH GRANT OPTION;"
-echo "===================刷新权限表==================="
-mysqladmin -v -uroot -p${mariadbRootPassword} reload
-sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
-echo "===================数据库配置完成==================="
-# 适配docker
-if [[ ${inDocker} == "yes" ]]; then
-    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
-    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
-    configFile=/etc/supervisor/conf.d/mysql.conf
-    echo "[program:mariadb]" > ${configFile}
-    echo "command=/usr/sbin/mysqld \
-        --basedir=/usr \
-        --datadir=/var/lib/mysql \
-        --plugin-dir=/usr/lib/x86_64-linux-gnu/mariadb19/plugin \
-        --user=mysql --skip-log-error \
-        --pid-file=/run/mysqld/mysqld.pid \
-        --socket=/var/run/mysqld/mysqld.sock" >> ${configFile}
-    echo "priority=1" >> ${configFile}
-    echo "autostart=true" >> ${configFile}
-    echo "autorestart=true" >> ${configFile}
-    echo "numprocs=1" >> ${configFile}
-    echo "startretries=10" >> ${configFile}
-    echo "exitcodes=0" >> ${configFile}
-    echo "stopsignal=KILL" >> ${configFile}
-    echo "stopwaitsecs=10" >> ${configFile}
-    echo "redirect_stderr=true" >> ${configFile}
-    echo "stdout_logfile_maxbytes=1024MB" >> ${configFile}
-    echo "stdout_logfile_backups=10" >> ${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${configFile}
-    configFile=/etc/supervisor/conf.d/nginx.conf
-    echo "[program: nginx]" > ${configFile}
-    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${configFile}
-    echo "autorestart=true" >> ${configFile}
-    echo "autostart=true" >> ${configFile}
-    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> ${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> ${configFile}
-    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> ${configFile}
-    echo "user=root" >> ${configFile}
-    echo "stopsignal=INT" >> ${configFile}
-    echo "startsecs=10" >> ${configFile}
-    echo "startretries=5" >> ${configFile}
-    echo "stopasgroup=true" >> ${configFile}
-fi
 # 基础需求安装完毕。
 echo "===================基础需求安装完毕。==================="
 # 切换用户
-su - frappe <<EOF
+su - ${userName} <<EOF
 # 配置运行环境变量
 echo "===================配置运行环境变量==================="
 cd ~
@@ -749,10 +716,11 @@ for ((i=0; i<5; i++)); do
     rm -rf ~/${installDir}
     set +e
     bench init ${frappeBranch} --python /usr/bin/python3 --ignore-exist ${installDir} ${frappePath}
-    err=$?
+    err=\$?
     set -e
     if [[ \${err} == 0 ]]; then
-        break
+        echo "结束"
+        i=99
     elif [[ \${i} -ge 4 ]]; then
         echo "==========frappe初始化失败太多，退出脚本！=========="
         exit 1
@@ -760,6 +728,7 @@ for ((i=0; i<5; i++)); do
         echo "==========frappe初始化失败第"\${i}"次！自动重试。=========="
     fi
 done
+echo "frappe初始化脚本执行结束..."
 cd ~/${installDir}
 # 环境需求检查,frappe
 frappeV=\$(bench version | grep "frappe" || true)
@@ -769,6 +738,60 @@ if [[ \${frappeV} == "" ]]; then
 else
     echo '==========frappe初始化成功=========='
     echo \${frappeV}
+fi
+# 适配docker
+echo "判断是否适配docker"
+if [[ ${inDocker} == "yes" ]]; then
+    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
+    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
+    mkdir /home/${userName}/${installDir}/config/supervisor
+    configFile=/home/${userName}/${installDir}/config/supervisor/mysql.conf
+    echo "[program:mariadb]" > \${configFile}
+    echo "command=/usr/sbin/mysqld \
+        --basedir=/usr \
+        --datadir=/var/lib/mysql \
+        --plugin-dir=/usr/lib/x86_64-linux-gnu/mariadb19/plugin \
+        --user=mysql --skip-log-error \
+        --pid-file=/run/mysqld/mysqld.pid \
+        --socket=/var/run/mysqld/mysqld.sock" >> \${configFile}
+    echo "priority=1" >> \${configFile}
+    echo "autostart=true" >> \${configFile}
+    echo "autorestart=true" >> \${configFile}
+    echo "numprocs=1" >> \${configFile}
+    echo "startretries=10" >> \${configFile}
+    echo "exitcodes=0" >> \${configFile}
+    echo "stopsignal=KILL" >> \${configFile}
+    echo "stopwaitsecs=10" >> \${configFile}
+    echo "redirect_stderr=true" >> \${configFile}
+    echo "stdout_logfile_maxbytes=1024MB" >> \${configFile}
+    echo "stdout_logfile_backups=10" >> \${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> \${configFile}
+    configFile=/home/${userName}/${installDir}/config/supervisor/nginx.conf
+    echo "[program: nginx]" > \${configFile}
+    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> \${configFile}
+    echo "autorestart=true" >> \${configFile}
+    echo "autostart=true" >> \${configFile}
+    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> \${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> \${configFile}
+    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> \${configFile}
+    echo "user=root" >> \${configFile}
+    echo "stopsignal=INT" >> \${configFile}
+    echo "startsecs=10" >> \${configFile}
+    echo "startretries=5" >> \${configFile}
+    echo "stopasgroup=true" >> \${configFile}
+    # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
+    sudo service mysql stop
+    sleep 2
+    if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+        sudo ln -s /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
+    fi
+    i=\$(ps aux |grep -c supervisor || true)
+    if [[ \${i} -le 1 ]]; then
+        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    else
+        sudo /usr/bin/supervisorctl reload
+    fi
+    sleep 1
 fi
 # 获取erpnext应用
 echo "===================获取erpnext应用==================="
@@ -795,10 +818,28 @@ bench --site ${siteName} install-app erpnext_oob
 echo "===================安装权限优化==================="
 bench get-app https://gitee.com/yuzelin/zelin_permission.git
 bench --site ${siteName} install-app zelin_permission
+# 清理工作台
+echo "===================清理工作台==================="
+bench clear-cache
+# 生产模式开启
 if [[ ${productionMode} == "yes" ]]; then
     echo "================开启生产模式==================="
     # 可能会自动安装一些软件，刷新软件库
     sudo apt update
+    # 预先安装nginx，防止自动部署出错
+    sudo apt install nginx -y
+    if [[ ${inDocker} == "yes" ]]; then
+        # 使用supervisor管理nginx进程
+        if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+            sudo ln -s /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
+        fi
+        i=\$(ps aux |grep -c supervisor || true)
+        if [[ \${i} -le 1 ]]; then
+            sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+        else
+            sudo /usr/bin/supervisorctl reload
+        fi
+    fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
     echo "修正脚本代码..."
     if [[ ${supervisorCommand} != "" ]]; then
@@ -817,32 +858,32 @@ if [[ ${productionMode} == "yes" ]]; then
     # 开启初始化时如果之前supervisor没有安装或安装失败会再次尝试安装。但可能因为没有修改为正确的重启指令不能重启。
     f="/etc/supervisor/conf.d/${installDir}.conf"
     i=0
-    while [[ (! -e \${f}) && (i -lt 9) ]]; do
-        echo "尝试开启生产模式..."
-        sudo apt update
-        sudo apt install nginx -y
-        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    while [[ i -lt 9 ]]; do
+        echo "尝试开启生产模式\${i}..."
         set +e
         sudo bench setup production ${userName} --yes
-        err=$?
         set -e
-        let i++
-        if [[ \${err} == 0 ]]; then
-            echo "==========开启生产模式执行完毕\${i}，自动检查是否成功生成配置文件。=========="
-            continue
+        i=\$((\${i} + 1))
+        echo "判断执行结果"
+        sleep 1
+        if [[ -e \${f} ]]; then
+            echo "配置文件已生成..."
+            i=99
         elif [[ \${i} -ge 9 ]]; then
-            echo "==========开启生产模式失败太多次\${i}，退出脚本！=========="
-            exit 1
+            echo "失败次数过多\${i}，请尝试手动开启！"
+            i=99
+        else
+            echo "配置文件生成失败\${i}，自动重试。"
         fi
-        echo "==========开启生产模式失败第"\${i}"次！自动重试。=========="
     done
-    echo "已开启生产模式\${i}..."
+    # 确认supervisor进程存在
+    i=\$(ps aux |grep -c supervisor || true)
+    if [[ \${i} -le 1 ]]; then
+        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    else
+        sudo /usr/bin/supervisorctl reload
+    fi
 fi
-# 清理工作台
-echo "===================清理工作台==================="
-bench migrate
-bench restart
-bench clear-cache
 # 修正权限
 echo "===================修正权限==================="
 sudo chown -R ${userName}:${userName} /home/${userName}/${installDir}/*
@@ -875,7 +916,11 @@ if [[ ${#warnArr[@]} != 0 ]]; then
     done
 fi
 if [[ ${productionMode} == "yes" ]]; then
-    echo "已开启生产模式。请访问http://ip访问网站。默认监听80端口。"
+    if [[ -e /etc/supervisor/conf.d/${installDir}.conf ]]; then
+        echo "已开启生产模式。请访问http://ip访问网站。默认监听80端口。"
+    else
+        echo "已配置开启生产模式。但supervisor配置文件生成失败，请排除错误后手动开启。"
+    fi
 else
     echo "使用su - ${userName}转到${userName}用户进入~/\${installDir}目录"
     echo "运行bench start启动项目，默认端口号8000"
