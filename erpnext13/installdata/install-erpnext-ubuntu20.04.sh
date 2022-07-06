@@ -44,6 +44,7 @@ erpnextPath="https://gitee.com/mirrors/erpnext"
 erpnextBranch="version-13"
 siteName="site1.local"
 siteDbPassword="Pass1234"
+webPort=""
 productionMode="yes"
 # 是否修改apt安装源，如果是云服务器建议不修改。
 altAptSources="yes"
@@ -56,8 +57,26 @@ removeDuplicate="yes"
 # 遍历参数修改默认值
 # 脚本后添加参数如有冲突，靠后的参数生效。
 echo "===================获取参数==================="
+argTag=""
 for arg in $*
 do
+    if [[ $argTag != "" ]]; then
+        case "${argTag}" in
+        "webPort")
+            t=$(echo ${arg}|sed 's/[0-9]//g')
+            if [[ (${t} == "") && (${arg} -ge 80) && (${arg} -lt 65535) ]]; then
+                webPort=${arg}
+                echo "设定web端口为${webPort}。"
+                # 只有收到正确的端口参数才跳转下一个参数，否则将继续识别当前参数。
+                continue
+            else
+                # 只有-p没有正确的参数会将webPort参数置空
+                webPort=""
+            fi
+            ;;
+        esac
+        argTag=""
+    fi
     if [[ ${arg} == -* ]];then
         arg=${arg:1:${#arg}}
         for i in `seq ${#arg}`
@@ -71,6 +90,10 @@ do
                 ;;
             "d")
                 inDocker='yes'
+                echo "针对docker镜像安装方式适配。"
+                ;;
+            "p")
+                argTag='webPort'
                 echo "针对docker镜像安装方式适配。"
                 ;;
             esac
@@ -130,6 +153,10 @@ do
             siteDbPassword=${arg1}
             echo "设置站点数据库密码为： ${siteDbPassword}"
             ;;
+        "webPort")
+            webPort=${arg1}
+            echo "设置web端口为： ${webPort}"
+            ;;
         "altAptSources")
             altAptSources=${arg1}
             echo "是否修改apt安装源，云服务器有自己的安装，建议不修改。"
@@ -168,6 +195,7 @@ echo "拉取erpnext地址："${erpnextPath}
 echo "指定erpnext版本："${erpnextBranch}
 echo "网站名称："${siteName}
 echo "网站数据库密码："${siteDbPassword}
+echo "web端口："${webPort}
 echo "是否修改apt安装源："${altAptSources}
 echo "是否静默模式安装："${quiet}
 echo "如有重名目录或数据库是否删除："${removeDuplicate}
@@ -611,6 +639,8 @@ dpkg-reconfigure -f noninteractive tzdata
 # 设置监控文件数量上限
 echo "===================设置监控文件数量上限==================="
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
+# 使其立即生效
+/sbin/sysctl -p
 # 检查是否安装nodejs14
 source /etc/profile
 if ! type node >/dev/null 2>&1; then
@@ -830,7 +860,7 @@ if [[ ${productionMode} == "yes" ]]; then
     sudo apt install nginx -y
     if [[ ${inDocker} == "yes" ]]; then
         # 使用supervisor管理nginx进程
-        if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+        if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
             sudo ln -s /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
         i=\$(ps aux |grep -c supervisor || true)
@@ -902,6 +932,54 @@ fi
 echo "===================确认安装==================="
 bench version
 EOF
+# 如果有设定端口，修改为设定端口
+if [[ ${webPort} != "" ]]; then
+    echo "===================设置web端口为：${webPort}==================="
+    # 再次验证端口号的有效性
+    t=$(echo ${webPort}|sed 's/[0-9]//g')
+    if [[ (${t} == "") && (${webPort} -ge 80) && (${webPort} -lt 65535) ]]; then
+        if [[ ${productionMode} == "yes" ]]; then
+            f="/home/${userName}/${installDir}/config/nginx.conf"
+            if [[ -e ${f} ]]; then
+                echo "找到配置文件："${f}
+                n=($(sed -n "/^[[:space:]]*listen/=" ${f}))
+                # 如找到替换为可用指令
+                if [ ${n} ]; then
+                    sed -i "${n} c listen ${webPort};" ${f}
+                    sed -i "$((${n}+1)) c listen [::]:${webPort};" ${f}
+                    echo "web端口号修改为："${webPort}
+                else
+                    echo "配置文件中没找到设置行。修改失败。"
+                    warnArr[${#warnArr[@]}]="找到配置文件："${f}",没找到设置行。修改失败。"
+                fi
+            else
+                echo "没有找到配置文件："${f}",端口修改失败。"
+                warnArr[${#warnArr[@]}]="没有找到配置文件："${f}",端口修改失败。"
+            fi
+        else
+            echo "开发模式修改端口号"
+            f="/home/${userName}/${installDir}/Procfile"
+            echo "找到配置文件："${f}
+            if [[ -e ${f} ]]; then
+                n=($(sed -n "/^web.*port.*/=" ${f}))
+                # 如找到替换为可用指令
+                if [ ${n} ]; then
+                    sed -i "${n} c web: bench serve --port ${webPort}" ${f}
+                    echo "web端口号修改为："${webPort}
+                else
+                    echo "配置文件中没找到设置行。修改失败。"
+                    warnArr[${#warnArr[@]}]="找到配置文件："${f}",没找到设置行。修改失败。"
+                fi
+            else
+                echo "没有找到配置文件："${f}",端口修改失败。"
+                warnArr[${#warnArr[@]}]="没有找到配置文件："${f}",端口修改失败。"
+            fi
+        fi
+    else
+        echo "设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
+        warnArr[${#warnArr[@]}]="设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
+    fi
+fi
 echo "===================主要运行环境==================="
 rteArr[${#rteArr[@]}]='bench '$(bench --version 2>/dev/null)
 for i in "${rteArr[@]}"
