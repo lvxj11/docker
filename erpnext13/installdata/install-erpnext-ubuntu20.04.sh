@@ -708,11 +708,13 @@ export LANG=en_US.UTF-8
 # yarn config list
 yarn config set registry https://registry.npm.taobao.org --global
 echo "===================用户yarn已修改为国内源==================="
+EOF
 # 重启redis-server和mariadb
 echo "===================重启redis-server和mariadb==================="
-sudo service redis-server restart
-sudo service mysql restart
+service redis-server restart
+service mysql restart
 # 安装bench
+su - ${userName} <<EOF
 echo "===================安装bench==================="
 sudo -H pip3 install frappe-bench${benchVersion}
 # 环境需求检查,bench
@@ -724,22 +726,25 @@ else
     echo "==========bench安装失败退出脚本！=========="
     exit 1
 fi
+EOF
+rteArr[${#rteArr[@]}]='bench '$(bench --version 2>/dev/null)
 # bensh脚本适配docker
 if [[ ${inDocker} == "yes" ]]; then
     # 修改bensh脚本不安装fail2ban
     echo "已配置在docker中运行，将注释安装fail2ban的代码。"
     # 确认bensh脚本使用supervisor指令代码行
     f="/usr/local/lib/python3.8/dist-packages/bench/config/production_setup.py"
-    n=\$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" \${f})
+    n=$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" ${f})
     # 如找到代码注释判断行及执行行
-    if [ \${n} ]; then
+    if [ ${n} ]; then
         echo "找到fail2ban安装代码行，添加注释符。"
-        sudo sed -i "\${n} s/^/#&/" \${f}
+        sed -i "${n} s/^/#&/" ${f}
         let n++
-        sudo sed -i "\${n} s/^/#&/" \${f}
+        sed -i "${n} s/^/#&/" ${f}
     fi
 fi
 # 初始化frappe
+su - ${userName} <<EOF
 echo "===================初始化frappe==================="
 # 如果初始化失败，尝试5次。
 for ((i=0; i<5; i++)); do
@@ -749,16 +754,20 @@ for ((i=0; i<5; i++)); do
     err=\$?
     set -e
     if [[ \${err} == 0 ]]; then
-        echo "结束"
-        i=99
+        echo "执行返回正确\${i}"
+        sleep 1
+        break
     elif [[ \${i} -ge 4 ]]; then
-        echo "==========frappe初始化失败太多，退出脚本！=========="
+        echo "==========frappe初始化失败太多\${i}，退出脚本！=========="
         exit 1
     else
         echo "==========frappe初始化失败第"\${i}"次！自动重试。=========="
     fi
 done
 echo "frappe初始化脚本执行结束..."
+EOF
+# 确认frappe初始化
+su - ${userName} <<EOF
 cd ~/${installDir}
 # 环境需求检查,frappe
 frappeV=\$(bench version | grep "frappe" || true)
@@ -769,6 +778,7 @@ else
     echo '==========frappe初始化成功=========='
     echo \${frappeV}
 fi
+EOF
 # 适配docker
 echo "判断是否适配docker"
 if [[ ${inDocker} == "yes" ]]; then
@@ -776,70 +786,85 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
     mkdir /home/${userName}/${installDir}/config/supervisor
     configFile=/home/${userName}/${installDir}/config/supervisor/mysql.conf
-    echo "[program:mariadb]" > \${configFile}
+    echo "[program:mariadb]" > ${configFile}
     echo "command=/usr/sbin/mysqld \
         --basedir=/usr \
         --datadir=/var/lib/mysql \
         --plugin-dir=/usr/lib/x86_64-linux-gnu/mariadb19/plugin \
         --user=mysql --skip-log-error \
         --pid-file=/run/mysqld/mysqld.pid \
-        --socket=/var/run/mysqld/mysqld.sock" >> \${configFile}
-    echo "priority=1" >> \${configFile}
-    echo "autostart=true" >> \${configFile}
-    echo "autorestart=true" >> \${configFile}
-    echo "numprocs=1" >> \${configFile}
-    echo "startretries=10" >> \${configFile}
-    echo "exitcodes=0" >> \${configFile}
-    echo "stopsignal=KILL" >> \${configFile}
-    echo "stopwaitsecs=10" >> \${configFile}
-    echo "redirect_stderr=true" >> \${configFile}
-    echo "stdout_logfile_maxbytes=1024MB" >> \${configFile}
-    echo "stdout_logfile_backups=10" >> \${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> \${configFile}
+        --socket=/var/run/mysqld/mysqld.sock" >> ${configFile}
+    echo "priority=1" >> ${configFile}
+    echo "autostart=true" >> ${configFile}
+    echo "autorestart=true" >> ${configFile}
+    echo "numprocs=1" >> ${configFile}
+    echo "startretries=10" >> ${configFile}
+    echo "exitcodes=0" >> ${configFile}
+    echo "stopsignal=KILL" >> ${configFile}
+    echo "stopwaitsecs=10" >> ${configFile}
+    echo "redirect_stderr=true" >> ${configFile}
+    echo "stdout_logfile_maxbytes=1024MB" >> ${configFile}
+    echo "stdout_logfile_backups=10" >> ${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${configFile}
     configFile=/home/${userName}/${installDir}/config/supervisor/nginx.conf
-    echo "[program: nginx]" > \${configFile}
-    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> \${configFile}
-    echo "autorestart=true" >> \${configFile}
-    echo "autostart=true" >> \${configFile}
-    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> \${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> \${configFile}
-    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> \${configFile}
-    echo "user=root" >> \${configFile}
-    echo "stopsignal=INT" >> \${configFile}
-    echo "startsecs=10" >> \${configFile}
-    echo "startretries=5" >> \${configFile}
-    echo "stopasgroup=true" >> \${configFile}
+    echo "[program: nginx]" > ${configFile}
+    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${configFile}
+    echo "autorestart=true" >> ${configFile}
+    echo "autostart=true" >> ${configFile}
+    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> ${configFile}
+    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> ${configFile}
+    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> ${configFile}
+    echo "user=root" >> ${configFile}
+    echo "stopsignal=INT" >> ${configFile}
+    echo "startsecs=10" >> ${configFile}
+    echo "startretries=5" >> ${configFile}
+    echo "stopasgroup=true" >> ${configFile}
     # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
-    sudo service mysql stop
+    service mysql stop
     sleep 2
     if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
-        sudo ln -s /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
+        ln -s /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
     fi
-    i=\$(ps aux |grep -c supervisor || true)
-    if [[ \${i} -le 1 ]]; then
-        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    i=$(ps aux |grep -c supervisor || true)
+    if [[ ${i} -le 1 ]]; then
+        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
-        sudo /usr/bin/supervisorctl reload
+        /usr/bin/supervisorctl reload
     fi
-    sleep 1
+    sleep 2
 fi
 # 获取erpnext应用
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================获取erpnext应用==================="
 bench get-app ${erpnextBranch} ${erpnextPath}
 # cd ~/${installDir} && ./env/bin/pip3 install -e apps/erpnext/
+EOF
 # 建立新网站
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================建立新网站==================="
 bench new-site --mariadb-root-password ${mariadbRootPassword} ${siteDbPassword} --admin-password ${adminPassword} ${siteName}
+EOF
 # 安装erpnext应用到新网站
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================安装erpnext应用到新网站==================="
 bench --site ${siteName} install-app erpnext
+EOF
+# 站点配置
+su - ${userName} <<EOF
+cd ~/${installDir}
 # 设置网站超时时间
 echo "===================设置网站超时时间==================="
 bench config http_timeout 6000
 # 开启默认站点并设置默认站点
 bench config serve_default_site on
 bench use ${siteName}
+EOF
 # 安装中文本地化
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================安装中文本地化==================="
 bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
 bench --site ${siteName} install-app erpnext_chinese
@@ -848,26 +873,31 @@ bench --site ${siteName} install-app erpnext_oob
 echo "===================安装权限优化==================="
 bench get-app https://gitee.com/yuzelin/zelin_permission.git
 bench --site ${siteName} install-app zelin_permission
+EOF
 # 清理工作台
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================清理工作台==================="
 bench clear-cache
+EOF
 # 生产模式开启
 if [[ ${productionMode} == "yes" ]]; then
     echo "================开启生产模式==================="
     # 可能会自动安装一些软件，刷新软件库
-    sudo apt update
+    apt update
     # 预先安装nginx，防止自动部署出错
-    sudo apt install nginx -y
+    apt install nginx -y
+    rteArr[${#rteArr[@]}]=$(nginx -v 2>/dev/null)
     if [[ ${inDocker} == "yes" ]]; then
         # 使用supervisor管理nginx进程
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
-            sudo ln -s /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
+            ln -s /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
-        i=\$(ps aux |grep -c supervisor || true)
-        if [[ \${i} -le 1 ]]; then
-            sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+        i=$(ps aux |grep -c supervisor || true)
+        if [[ ${i} -le 1 ]]; then
+            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
         else
-            sudo /usr/bin/supervisorctl reload
+            /usr/bin/supervisorctl reload
         fi
     fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
@@ -876,11 +906,11 @@ if [[ ${productionMode} == "yes" ]]; then
         echo "可用的supervisor重启指令为："${supervisorCommand}
         # 确认bensh脚本使用supervisor指令代码行
         f="/usr/local/lib/python3.8/dist-packages/bench/config/supervisor.py"
-        n=\$(sed -n "/service.*supervisor.*reload\|service.*supervisor.*restart/=" \${f})
+        n=$(sed -n "/service.*supervisor.*reload\|service.*supervisor.*restart/=" ${f})
         # 如找到替换为可用指令
-        if [ \${n} ]; then
+        if [ ${n} ]; then
             echo "替换bensh脚本supervisor重启指令为："${supervisorCommand}
-            sudo sed -i "\${n} s/reload\|restart/${supervisorCommand}/g" \${f}
+            sed -i "${n} s/reload\|restart/${supervisorCommand}/g" ${f}
         fi
     fi
     # 准备执行开启生产模式脚本
@@ -889,46 +919,56 @@ if [[ ${productionMode} == "yes" ]]; then
     f="/etc/supervisor/conf.d/${installDir}.conf"
     i=0
     while [[ i -lt 9 ]]; do
-        echo "尝试开启生产模式\${i}..."
+        echo "尝试开启生产模式${i}..."
         set +e
+        su - ${userName} <<EOF
+        cd ~/${installDir}
         sudo bench setup production ${userName} --yes
+EOF
         set -e
-        i=\$((\${i} + 1))
+        i=$((${i} + 1))
         echo "判断执行结果"
         sleep 1
-        if [[ -e \${f} ]]; then
+        if [[ -e ${f} ]]; then
             echo "配置文件已生成..."
-            i=99
-        elif [[ \${i} -ge 9 ]]; then
-            echo "失败次数过多\${i}，请尝试手动开启！"
-            i=99
+            break
+        elif [[ ${i} -ge 9 ]]; then
+            echo "失败次数过多${i}，请尝试手动开启！"
+            break
         else
-            echo "配置文件生成失败\${i}，自动重试。"
+            echo "配置文件生成失败${i}，自动重试。"
         fi
     done
     # 确认supervisor进程存在
-    i=\$(ps aux |grep -c supervisor || true)
-    if [[ \${i} -le 1 ]]; then
-        sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    i=$(ps aux |grep -c supervisor || true)
+    if [[ ${i} -le 1 ]]; then
+        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
-        sudo /usr/bin/supervisorctl reload
+        /usr/bin/supervisorctl reload
     fi
 fi
 # 修正权限
 echo "===================修正权限==================="
-sudo chown -R ${userName}:${userName} /home/${userName}/${installDir}/*
+chown -R ${userName}:${userName} /home/${userName}/${installDir}/*
 # 清理垃圾,ERPNext安装完毕
 echo "===================清理垃圾,ERPNext安装完毕==================="
-sudo -H apt clean
-sudo -H apt autoremove -y
-sudo -H rm -rf /var/lib/apt/lists/*
-sudo -H pip cache purge
+apt clean
+apt autoremove -y
+rm -rf /var/lib/apt/lists/*
+pip cache purge
 npm cache clean --force
 yarn cache clean
+su - ${userName} <<EOF
+cd ~/${installDir}
+npm cache clean --force
+yarn cache clean
+EOF
 # 确认安装
 if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
     clear
 fi
+su - ${userName} <<EOF
+cd ~/${installDir}
 echo "===================确认安装==================="
 bench version
 EOF
@@ -947,6 +987,7 @@ if [[ ${webPort} != "" ]]; then
                 if [ ${n} ]; then
                     sed -i "${n} c listen ${webPort};" ${f}
                     sed -i "$((${n}+1)) c listen [::]:${webPort};" ${f}
+                    /etc/init.d/nginx reload
                     echo "web端口号修改为："${webPort}
                 else
                     echo "配置文件中没找到设置行。修改失败。"
@@ -965,6 +1006,7 @@ if [[ ${webPort} != "" ]]; then
                 # 如找到替换为可用指令
                 if [ ${n} ]; then
                     sed -i "${n} c web: bench serve --port ${webPort}" ${f}
+                    su - ${userName} bash -c "cd ~/${installDir}; bench restart"
                     echo "web端口号修改为："${webPort}
                 else
                     echo "配置文件中没找到设置行。修改失败。"
@@ -981,7 +1023,6 @@ if [[ ${webPort} != "" ]]; then
     fi
 fi
 echo "===================主要运行环境==================="
-rteArr[${#rteArr[@]}]='bench '$(bench --version 2>/dev/null)
 for i in "${rteArr[@]}"
 do
     echo ${i}
@@ -1000,7 +1041,7 @@ if [[ ${productionMode} == "yes" ]]; then
         echo "已配置开启生产模式。但supervisor配置文件生成失败，请排除错误后手动开启。"
     fi
 else
-    echo "使用su - ${userName}转到${userName}用户进入~/\${installDir}目录"
+    echo "使用su - ${userName}转到${userName}用户进入~/${installDir}目录"
     echo "运行bench start启动项目，默认端口号8000"
 fi
 exit 0
