@@ -7,7 +7,7 @@ ENV LANG=zh_CN.UTF-8 \
     TZ=Asia/Shanghai
 
 # 运行基础软件安装脚本
-RUN RUN apt update &&\
+RUN apt update &&\
     DEBIAN_FRONTEND=noninteractive apt upgrade -y &&\
     DEBIAN_FRONTEND=noninteractive apt install -y tzdata &&\
     ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime &&\
