@@ -1,39 +1,30 @@
 # cloudreve
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 LABEL author=lvxj11
 
 # 设定参数
-ENV MARIADB_ROOT_PASSWORD=Pass0129
-ENV ADMIN_PASSWORD=admin
-
-# 拷贝基础软件安装脚本
-COPY ./installdata/installcomm.sh /installdata/installcomm.sh
+ENV LANG=zh_CN.UTF-8 \
+    TZ=Asia/Shanghai
 
 # 运行基础软件安装脚本
-RUN chmod -R 777 /installdata/* && /installdata/installcomm.sh noMirror
+RUN RUN apt update &&\
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y &&\
+    DEBIAN_FRONTEND=noninteractive apt install -y tzdata &&\
+    ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime &&\
+    echo "${TZ}" > /etc/timezone &&\
+    apt clean &&\
+    apt autoremove -y &&\
+    rm -rf /var/lib/apt/lists/*
 
-# 切换用户
-USER frappe
-WORKDIR /home/frappe
+# 设定工作目录
+WORKDIR /cloudreve
 
-# 拷贝erpnext12安装脚本
-COPY ./installdata/installerpnext.sh /installdata/installerpnext.sh
+EXPOSE 5212
 
-# 运行erpnext12安装脚本
-RUN sudo chmod -R 777 /installdata/* && /installdata/installerpnext.sh
-
-# 拷贝erpnext12启动脚本
-COPY ./installdata/start.sh /installdata/start.sh
-
-# 修改启动脚本权限
-RUN sudo chmod -R 777 /installdata/start.sh
-
-EXPOSE 80 443 3306 8000 9000 6787
-
-VOLUME /home/frappe/frappe-bench/sites
-VOLUME /var/lib/mysql
+# 必须挂载cloudreve目录，应用程序及授权文件自行放置到该目录并添加运行权限。
+VOLUME ["/cloudreve"]
 
 STOPSIGNAL SIGTERM
 
-# ENTRYPOINT ["bash"]
-CMD ["/installdata/start.sh"]
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["./cloudreve"]
