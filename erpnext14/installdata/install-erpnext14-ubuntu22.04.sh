@@ -839,7 +839,10 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "stopasgroup=true" >> ${configFile}
     # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
     echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
-    service mysql stop
+    ps aux |grep -c mysql
+    service mysql stop 2>&1
+    echo "mariadb进程已停止"
+    ps aux |grep -c mysql
     sleep 2
     if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
         echo "建立数据库配置文件软链接"
