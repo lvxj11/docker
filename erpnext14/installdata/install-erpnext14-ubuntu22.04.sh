@@ -727,8 +727,10 @@ echo "===================用户yarn已修改为国内源==================="
 EOF
 # 重启redis-server和mariadb
 echo "===================重启redis-server和mariadb==================="
-service redis-server restart
-service mariadb restart
+# service redis-server restart
+# service mariadb restart
+/etc/init.d/redis-server restart
+/etc/init.d/mariadb restart
 # 安装bench
 su - ${userName} <<EOF
 echo "===================安装bench==================="
@@ -840,7 +842,7 @@ if [[ ${inDocker} == "yes" ]]; then
     # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
     echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
     ps aux |grep mysql
-    service mysql stop 2>&1
+    /etc/init.d/mariadb stop
     echo "mariadb进程已停止"
     ps aux |grep mysql
     sleep 2
