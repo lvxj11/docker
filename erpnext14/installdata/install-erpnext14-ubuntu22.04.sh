@@ -274,14 +274,14 @@ if [[ ${altAptSources} == "yes" ]];then
     fi
     rm -f /etc/apt/sources.list
     bash -c "cat << EOF > /etc/apt/sources.list && apt update 
-deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-# deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
-deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-# deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
-deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-# deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
-deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
-# deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
+# deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted universe multiverse
 EOF"
     echo "===================apt已修改为国内源==================="
 fi
@@ -838,15 +838,19 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "startretries=5" >> ${configFile}
     echo "stopasgroup=true" >> ${configFile}
     # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
+    echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
     service mysql stop
     sleep 2
     if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+        echo "建立数据库配置文件软链接"
         ln -fs /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
     fi
     i=$(ps aux |grep -c supervisor || true)
     if [[ ${i} -le 1 ]]; then
+        echo "启动supervisor进程"
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
+        echo "重载supervisor配置"
         /usr/bin/supervisorctl reload
     fi
     sleep 2
