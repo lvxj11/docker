@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.1 2022.07.13
+# v0.2 2022.08.11   修正在docker镜像安装的错误。
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -841,10 +841,7 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "stopasgroup=true" >> ${configFile}
     # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
     echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
-    ps aux |grep mysql
     /etc/init.d/mariadb stop
-    echo "mariadb进程已停止"
-    ps aux |grep mysql
     sleep 2
     if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
         echo "建立数据库配置文件软链接"
@@ -921,6 +918,7 @@ if [[ ${productionMode} == "yes" ]]; then
     rteArr[${#rteArr[@]}]=$(nginx -v 2>/dev/null)
     if [[ ${inDocker} == "yes" ]]; then
         # 使用supervisor管理nginx进程
+        /etc/init.d/nginx stop
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
             ln -fs /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
