@@ -941,6 +941,7 @@ EOF
     done
     # 确认supervisor进程存在
     i=$(ps aux |grep -c supervisor || true)
+    echo "supervisor进程：${i}"
     if [[ ${i} -le 1 ]]; then
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
