@@ -806,13 +806,7 @@ if [[ ${inDocker} == "yes" ]]; then
     configFile=/home/${userName}/${installDir}/config/supervisor/mysql.conf
     rm -f ${configFile}
     echo "[program:mariadb]" > ${configFile}
-    echo "command=/usr/sbin/mysqld \
-        --basedir=/usr \
-        --datadir=/var/lib/mysql \
-        --plugin-dir=/usr/lib/x86_64-linux-gnu/mariadb19/plugin \
-        --user=mysql --skip-log-error \
-        --pid-file=/run/mysqld/mysqld.pid \
-        --socket=/var/run/mysqld/mysqld.sock" >> ${configFile}
+    echo "command=/usr/sbin/mariadbd" >> ${configFile}
     echo "priority=1" >> ${configFile}
     echo "autostart=true" >> ${configFile}
     echo "autorestart=true" >> ${configFile}
