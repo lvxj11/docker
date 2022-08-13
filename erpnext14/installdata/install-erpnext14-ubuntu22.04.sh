@@ -896,7 +896,7 @@ echo "===================安装中文本地化==================="
 bench get-app ${erpnextBranch} https://gitee.com/phipsoft/zh_chinese_language.git
 bench --site ${siteName} install-app zh_chinese_language
 EOF
-mariadbd status
+/etc/init.d/mariadb status
 # 清理工作台
 su - ${userName} <<EOF
 cd ~/${installDir}
@@ -1063,7 +1063,7 @@ for i in "${rteArr[@]}"
 do
     echo ${i}
 done
-mariadbd status
+/etc/init.d/mariadb status
 if [[ ${#warnArr[@]} != 0 ]]; then
     echo "===================警告==================="
     for i in "${warnArr[@]}"
