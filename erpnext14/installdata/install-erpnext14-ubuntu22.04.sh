@@ -964,10 +964,13 @@ EOF
         fi
     done
     # 确认supervisor进程存在
+    ps aux | grep supervisor
     i=$(ps aux |grep -c supervisor || true)
     if [[ ${i} -le 1 ]]; then
+        echo "启动supervisor进程"
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
+        echo "重载supervisor进程"
         /usr/bin/supervisorctl reload
     fi
 fi
