@@ -850,7 +850,7 @@ if [[ ${inDocker} == "yes" ]]; then
         echo "重载supervisor配置"
         /usr/bin/supervisorctl reload
     fi
-    sleep 2
+    sleep 1
 fi
 # 获取erpnext应用
 su - ${userName} <<EOF
@@ -917,8 +917,10 @@ if [[ ${productionMode} == "yes" ]]; then
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
             ln -fs /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
+        /usr/bin/supervisorctl status
         echo "重载supervisor配置"
         /usr/bin/supervisorctl reload
+        sleep 1
         /usr/bin/supervisorctl status
     fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
@@ -960,8 +962,10 @@ EOF
             echo "配置文件生成失败${i}，自动重试。"
         fi
     done
+    /usr/bin/supervisorctl status
     echo "重载supervisor配置"
-    /usr/bin/supervisorctl reload
+    /usr/bin/supervisorctl reload 
+    sleep 1
     /usr/bin/supervisorctl status
 fi
 # 如果有设定端口，修改为设定端口
