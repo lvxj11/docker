@@ -842,14 +842,8 @@ if [[ ${inDocker} == "yes" ]]; then
         echo "建立数据库配置文件软链接"
         ln -fs /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
     fi
-    i=$(ps aux |grep -c supervisor || true)
-    if [[ ${i} -le 1 ]]; then
-        echo "启动supervisor进程"
-        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-    else
-        echo "重载supervisor配置"
-        /usr/bin/supervisorctl reload
-    fi
+    echo "重载supervisor配置"
+    /usr/bin/supervisorctl reload
     sleep 2
 fi
 # 获取erpnext应用
@@ -896,7 +890,6 @@ echo "===================安装中文本地化==================="
 bench get-app ${erpnextBranch} https://gitee.com/phipsoft/zh_chinese_language.git
 bench --site ${siteName} install-app zh_chinese_language
 EOF
-/etc/init.d/mariadb status
 # 清理工作台
 su - ${userName} <<EOF
 cd ~/${installDir}
@@ -918,12 +911,9 @@ if [[ ${productionMode} == "yes" ]]; then
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
             ln -fs /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
-        i=$(ps aux |grep -c supervisor || true)
-        if [[ ${i} -le 1 ]]; then
-            /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-        else
-            /usr/bin/supervisorctl reload
-        fi
+        echo "重载supervisor配置"
+        /usr/bin/supervisorctl reload
+        /usr/bin/supervisorctl status
     fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
     echo "修正脚本代码..."
@@ -964,16 +954,9 @@ EOF
             echo "配置文件生成失败${i}，自动重试。"
         fi
     done
-    # 确认supervisor进程存在
-    ps aux | grep supervisor
-    i=$(ps aux |grep -c supervisor || true)
-    if [[ ${i} -le 1 ]]; then
-        echo "启动supervisor进程"
-        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-    else
-        echo "重载supervisor进程"
-        /usr/bin/supervisorctl reload
-    fi
+    echo "重载supervisor配置"
+    /usr/bin/supervisorctl reload
+    /usr/bin/supervisorctl status
 fi
 # 如果有设定端口，修改为设定端口
 if [[ ${webPort} != "" ]]; then
@@ -1063,7 +1046,6 @@ for i in "${rteArr[@]}"
 do
     echo ${i}
 done
-/etc/init.d/mariadb status
 if [[ ${#warnArr[@]} != 0 ]]; then
     echo "===================警告==================="
     for i in "${warnArr[@]}"
@@ -1080,5 +1062,8 @@ if [[ ${productionMode} == "yes" ]]; then
 else
     echo "使用su - ${userName}转到${userName}用户进入~/${installDir}目录"
     echo "运行bench start启动项目，使用ip或域名访问网站。监听${webPort}端口。"
+fi
+if [[ ${inDocker} == "yes" ]]; then
+    /usr/bin/supervisorctl stop all
 fi
 exit 0
