@@ -807,6 +807,7 @@ if [[ ${inDocker} == "yes" ]]; then
     rm -f ${configFile}
     echo "[program:mariadb]" > ${configFile}
     echo "command=/usr/sbin/mariadbd" >> ${configFile}
+    echo "user=mysql" >> ${configFile}
     echo "priority=1" >> ${configFile}
     echo "autostart=true" >> ${configFile}
     echo "autorestart=true" >> ${configFile}
