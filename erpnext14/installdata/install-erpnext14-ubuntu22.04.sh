@@ -842,8 +842,14 @@ if [[ ${inDocker} == "yes" ]]; then
         echo "建立数据库配置文件软链接"
         ln -fs /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
     fi
-    echo "重载supervisor配置"
-    /usr/bin/supervisorctl reload
+    i=$(ps aux | grep -c supervisor || true)
+    if [[ ${i} -le 1 ]]; then
+        echo "启动supervisor进程"
+        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    else
+        echo "重载supervisor配置"
+        /usr/bin/supervisorctl reload
+    fi
     sleep 2
 fi
 # 获取erpnext应用
