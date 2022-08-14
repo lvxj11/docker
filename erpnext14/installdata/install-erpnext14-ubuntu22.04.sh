@@ -419,7 +419,11 @@ if [[ ${n} == 0 ]]; then
     echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
 fi
 /etc/init.d/mariadb restart
-sleep 2
+# 等待2秒
+for i in $(seq -w 2); do
+    echo ${i}
+    sleep 1
+done
 # 授权远程访问并修改密码
 if mysql -uroot -e quit >/dev/null 2>&1
 then
@@ -731,6 +735,75 @@ echo "===================重启redis-server和mariadb==================="
 # service mariadb restart
 /etc/init.d/redis-server restart
 /etc/init.d/mariadb restart
+# 等待2秒
+for i in $(seq -w 2); do
+    echo ${i}
+    sleep 1
+done
+# 适配docker
+echo "判断是否适配docker"
+if [[ ${inDocker} == "yes" ]]; then
+    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
+    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
+    supervisorConfigDir=/home/${userName}/.config/supervisor
+    mkdir -p ${supervisorConfigDir}
+    f=${supervisorConfigDir}/mariadb.conf
+    rm -f ${f}
+    echo "[program:mariadb]" > ${f}
+    echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql" >> ${f}
+    # echo "user=mysql" >> ${f}
+    echo "priority=1" >> ${f}
+    echo "autostart=true" >> ${f}
+    echo "autorestart=true" >> ${f}
+    echo "numprocs=1" >> ${f}
+    echo "startretries=10" >> ${f}
+    echo "exitcodes=0" >> ${f}
+    echo "stopsignal=INT" >> ${f}
+    echo "stopwaitsecs=10" >> ${f}
+    echo "redirect_stderr=true" >> ${f}
+    echo "stdout_logfile_maxbytes=1024MB" >> ${f}
+    echo "stdout_logfile_backups=10" >> ${f}
+    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${f}
+    f=${supervisorConfigDir}/nginx.conf
+    rm -f ${f}
+    echo "[program: nginx]" > ${f}
+    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${f}
+    echo "autorestart=true" >> ${f}
+    echo "autostart=true" >> ${f}
+    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> ${f}
+    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> ${f}
+    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> ${f}
+    echo "user=root" >> ${f}
+    echo "stopsignal=INT" >> ${f}
+    echo "startsecs=10" >> ${f}
+    echo "startretries=5" >> ${f}
+    echo "stopasgroup=true" >> ${f}
+    # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
+    echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
+    /etc/init.d/mariadb stop
+    # 等待2秒
+    for i in $(seq -w 2); do
+        echo ${i}
+        sleep 1
+    done
+    if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+        echo "建立数据库配置文件软链接"
+        ln -fs ${supervisorConfigDir}/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
+    fi
+    i=$(ps aux | grep -c supervisor || true)
+    if [[ ${i} -le 1 ]]; then
+        echo "启动supervisor进程"
+        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+    else
+        echo "重载supervisor配置"
+        /usr/bin/supervisorctl reload
+    fi
+    # 等待2秒
+    for i in $(seq -w 2); do
+        echo ${i}
+        sleep 1
+    done
+fi
 # 安装bench
 su - ${userName} <<EOF
 echo "===================安装bench==================="
@@ -797,61 +870,6 @@ else
     echo \${frappeV}
 fi
 EOF
-# 适配docker
-echo "判断是否适配docker"
-if [[ ${inDocker} == "yes" ]]; then
-    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
-    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
-    mkdir /home/${userName}/${installDir}/config/supervisor
-    configFile=/home/${userName}/${installDir}/config/supervisor/mysql.conf
-    rm -f ${configFile}
-    echo "[program:mariadb]" > ${configFile}
-    echo "command=/usr/sbin/mariadbd" >> ${configFile}
-    echo "user=mysql" >> ${configFile}
-    echo "priority=1" >> ${configFile}
-    echo "autostart=true" >> ${configFile}
-    echo "autorestart=true" >> ${configFile}
-    echo "numprocs=1" >> ${configFile}
-    echo "startretries=10" >> ${configFile}
-    echo "exitcodes=0" >> ${configFile}
-    echo "stopsignal=KILL" >> ${configFile}
-    echo "stopwaitsecs=10" >> ${configFile}
-    echo "redirect_stderr=true" >> ${configFile}
-    echo "stdout_logfile_maxbytes=1024MB" >> ${configFile}
-    echo "stdout_logfile_backups=10" >> ${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${configFile}
-    configFile=/home/${userName}/${installDir}/config/supervisor/nginx.conf
-    rm -f ${configFile}
-    echo "[program: nginx]" > ${configFile}
-    echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${configFile}
-    echo "autorestart=true" >> ${configFile}
-    echo "autostart=true" >> ${configFile}
-    echo "stderr_logfile=/var/run/log/supervisor_nginx_error.log" >> ${configFile}
-    echo "stdout_logfile=/var/run/log/supervisor_nginx_stdout.log" >> ${configFile}
-    echo "environment=ASPNETCORE_ENVIRONMENT=Production" >> ${configFile}
-    echo "user=root" >> ${configFile}
-    echo "stopsignal=INT" >> ${configFile}
-    echo "startsecs=10" >> ${configFile}
-    echo "startretries=5" >> ${configFile}
-    echo "stopasgroup=true" >> ${configFile}
-    # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
-    echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
-    /etc/init.d/mariadb stop
-    sleep 2
-    if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
-        echo "建立数据库配置文件软链接"
-        ln -fs /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
-    fi
-    i=$(ps aux | grep -c supervisor || true)
-    if [[ ${i} -le 1 ]]; then
-        echo "启动supervisor进程"
-        /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
-    else
-        echo "重载supervisor配置"
-        /usr/bin/supervisorctl reload
-    fi
-    sleep 1
-fi
 # 获取erpnext应用
 su - ${userName} <<EOF
 cd ~/${installDir}
@@ -915,12 +933,18 @@ if [[ ${productionMode} == "yes" ]]; then
         # 使用supervisor管理nginx进程
         /etc/init.d/nginx stop
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
-            ln -fs /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
+            ln -fs ${supervisorConfigDir}/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
+        echo "当前supervisor状态"
         /usr/bin/supervisorctl status
         echo "重载supervisor配置"
         /usr/bin/supervisorctl reload
-        sleep 1
+        # 等待2秒
+        for i in $(seq -w 2); do
+            echo ${i}
+            sleep 1
+        done
+        echo "重载后supervisor状态"
         /usr/bin/supervisorctl status
     fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
@@ -962,11 +986,9 @@ EOF
             echo "配置文件生成失败${i}，自动重试。"
         fi
     done
-    /usr/bin/supervisorctl status
-    echo "重载supervisor配置"
-    /usr/bin/supervisorctl reload 
-    sleep 1
-    /usr/bin/supervisorctl status
+    # echo "重载supervisor配置"
+    # /usr/bin/supervisorctl reload 
+    # sleep 2
 fi
 # 如果有设定端口，修改为设定端口
 if [[ ${webPort} != "" ]]; then
@@ -1074,6 +1096,9 @@ else
     echo "运行bench start启动项目，使用ip或域名访问网站。监听${webPort}端口。"
 fi
 if [[ ${inDocker} == "yes" ]]; then
+    echo "当前supervisor状态"
+    /usr/bin/supervisorctl status
+    echo "停止所有进程。"
     /usr/bin/supervisorctl stop all
 fi
 exit 0
