@@ -750,15 +750,15 @@ if [[ ${inDocker} == "yes" ]]; then
     f=${supervisorConfigDir}/mariadb.conf
     rm -f ${f}
     echo "[program:mariadb]" > ${f}
-    echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql" >> ${f}
+    echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error" >> ${f}
     # echo "user=mysql" >> ${f}
     echo "priority=1" >> ${f}
     echo "autostart=true" >> ${f}
     echo "autorestart=true" >> ${f}
     echo "numprocs=1" >> ${f}
     echo "startretries=10" >> ${f}
-    echo "exitcodes=0" >> ${f}
-    echo "stopsignal=INT" >> ${f}
+    # echo "exitcodes=0,2" >> ${f}
+    # echo "stopsignal=INT" >> ${f}
     echo "stopwaitsecs=10" >> ${f}
     echo "redirect_stderr=true" >> ${f}
     echo "stdout_logfile_maxbytes=1024MB" >> ${f}
@@ -939,10 +939,10 @@ if [[ ${productionMode} == "yes" ]]; then
         /usr/bin/supervisorctl status
         echo "重载supervisor配置"
         /usr/bin/supervisorctl reload
-        # 等待2秒
-        for i in $(seq -w 2); do
-            echo ${i}
-            sleep 1
+        # 等待重载supervisor结束
+        echo "等待重载supervisor结束"
+        for i in $(seq -w 15 -1 1); do
+            echo -en ${i}; sleep 1
         done
         echo "重载后supervisor状态"
         /usr/bin/supervisorctl status
@@ -1098,7 +1098,7 @@ fi
 if [[ ${inDocker} == "yes" ]]; then
     echo "当前supervisor状态"
     /usr/bin/supervisorctl status
-    echo "停止所有进程。"
-    /usr/bin/supervisorctl stop all
+    # echo "停止所有进程。"
+    # /usr/bin/supervisorctl stop all
 fi
 exit 0
