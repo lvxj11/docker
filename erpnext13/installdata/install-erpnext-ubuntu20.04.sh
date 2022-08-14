@@ -1,5 +1,5 @@
 #!/bin/bash
-# v2.2 2022.07.04
+# v2.3 2022.07.09
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu20.04
@@ -54,13 +54,21 @@ quiet="no"
 inDocker="no"
 # 是否删除重复文件
 removeDuplicate="yes"
+# 检测如果是云主机则不修改apt安装源
+hostAddress=("mirrors.tencentyun.com" "mirrors.tuna.tsinghua.edu.cn")
+for h in ${hostAddress[@]}; do
+    n=$(cat /etc/apt/sources.list | grep -c ${h} || true)
+    if [[ ${n} -gt 0 ]]; then
+        altAptSources="no"
+    fi
+done
 # 遍历参数修改默认值
 # 脚本后添加参数如有冲突，靠后的参数生效。
 echo "===================获取参数==================="
 argTag=""
 for arg in $*
 do
-    if [[ $argTag != "" ]]; then
+    if [[ ${argTag} != "" ]]; then
         case "${argTag}" in
         "webPort")
             t=$(echo ${arg}|sed 's/[0-9]//g')
@@ -159,7 +167,7 @@ do
             ;;
         "altAptSources")
             altAptSources=${arg1}
-            echo "是否修改apt安装源，云服务器有自己的安装，建议不修改。"
+            echo "是否修改apt安装源：${altAptSources}，云服务器有自己的安装，建议不修改。"
             ;;
         "quiet")
             quiet=${arg1}
@@ -275,7 +283,7 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     sudo \
     wget \
     curl \
-    python3.8-minimal \
+    python3.8-dev \
     python3.8-venv \
     python3-setuptools \
     python3-pip \
@@ -367,15 +375,20 @@ else
     exit 1
 fi
 # 修改数据库配置文件
-echo "===================修改数据库配置文件==================="
-echo "[mysqld]" >> /etc/mysql/my.cnf
-echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
-echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
-echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
-echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
-echo "" >> /etc/mysql/my.cnf
-echo "[mysql]" >> /etc/mysql/my.cnf
-echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
+# 如果之前修改过则跳过
+n=$(cat /etc/mysql/my.cnf | grep -c "# ERPNext install script added" || true)
+if [[ ${n} == 0 ]]; then
+    echo "===================修改数据库配置文件==================="
+    echo "# ERPNext install script added" >> /etc/mysql/my.cnf
+    echo "[mysqld]" >> /etc/mysql/my.cnf
+    echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
+    echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
+    echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
+    echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
+    echo "" >> /etc/mysql/my.cnf
+    echo "[mysql]" >> /etc/mysql/my.cnf
+    echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
+fi
 /etc/init.d/mysql restart
 sleep 2
 # 授权远程访问并修改密码
@@ -563,7 +576,7 @@ fi
 # 环境需求检查,wkhtmltox
 if type wkhtmltopdf >/dev/null 2>&1; then
     result=$(wkhtmltopdf -V | grep "0.12.6" || true)
-    if [[ "${result}" == "" ]]
+    if [[ ${result} == "" ]]
     then
         echo '==========已存在wkhtmltox，但不是推荐的0.12.6版本。=========='
         warnArr[${#warnArr[@]}]='wkhtmltox不是推荐的0.12.6版本。'
@@ -578,13 +591,12 @@ fi
 # 建立新用户组和用户
 echo "===================建立新用户组和用户==================="
 result=$(grep "${userName}:" /etc/group || true)
-if [[ "${result}" == "" ]]
-then
+if [[ ${result} == "" ]]; then
     gid=1000
     while true
     do
         result=$(grep ":${gid}:" /etc/group || true)
-        if [[ "${result}" == "" ]]
+        if [[ ${result} == "" ]]
         then
             echo "建立新用户组: ${gid}:${userName}"
             groupadd -g ${gid} ${userName}
@@ -598,13 +610,13 @@ else
     echo '用户组已存在'
 fi
 result=$(grep "${userName}:" /etc/passwd || true)
-if [[ "${result}" == "" ]]
+if [[ ${result} == "" ]]
 then
     uid=1000
     while true
     do
         result=$(grep ":x:${uid}:" /etc/passwd || true)
-        if [[ "${result}" == "" ]]
+        if [[ ${result} == "" ]]
         then
             echo "建立新用户: ${uid}:${userName}"
             useradd --no-log-init -r -m -u ${uid} -g ${gid} -G  sudo ${userName}
@@ -617,8 +629,11 @@ then
 else
     echo '用户已存在'
 fi
+# 给用户添加sudo权限
+sed -i "/^${userName}.*/d" /etc/sudoers
 echo "${userName} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/${userName}
+sed -i "/^export.*${userName}.*/d" /etc/sudoers
 echo "export PATH=/home/${userName}/.local/bin:\$PATH" >> /home/${userName}/.bashrc
 # 修改用户pip默认源加速国内安装
 cp -af /root/.pip /home/${userName}/
@@ -630,7 +645,13 @@ usermod -s /bin/bash ${userName}
 echo "===================设置语言环境==================="
 sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 locale-gen
+sed -i "/^export.*LC_ALL=.*/d" /root/.bashrc
+sed -i "/^export.*LC_CTYPE=.*/d" /root/.bashrc
+sed -i "/^export.*LANG=.*/d" /root/.bashrc
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /root/.bashrc
+sed -i "/^export.*LC_ALL=.*/d" /home/${userName}/.bashrc
+sed -i "/^export.*LC_CTYPE=.*/d" /home/${userName}/.bashrc
+sed -i "/^export.*LANG=.*/d" /home/${userName}/.bashrc
 echo -e "export LC_ALL=en_US.UTF-8\nexport LC_CTYPE=en_US.UTF-8\nexport LANG=en_US.UTF-8" >> /home/${userName}/.bashrc
 # 设置时区为上海
 echo "===================设置时区为上海==================="
@@ -638,6 +659,7 @@ ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 dpkg-reconfigure -f noninteractive tzdata
 # 设置监控文件数量上限
 echo "===================设置监控文件数量上限==================="
+sed -i "/^fs.inotify.max_user_watches=.*/d" /etc/sysctl.conf
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
 # 使其立即生效
 /sbin/sysctl -p
@@ -661,7 +683,7 @@ fi
 # 环境需求检查,node
 if type node >/dev/null 2>&1; then
     result=$(node -v | grep "v14." || true)
-    if [[ "${result}" == "" ]]
+    if [[ ${result} == "" ]]
     then
         echo '==========已存在node，但不是v14版。这将有可能导致一些问题。建议卸载node后重试。=========='
         warnArr[${#warnArr[@]}]='node不是推荐的v14版本。'
@@ -786,6 +808,7 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
     mkdir /home/${userName}/${installDir}/config/supervisor
     configFile=/home/${userName}/${installDir}/config/supervisor/mysql.conf
+    rm -f ${configFile}
     echo "[program:mariadb]" > ${configFile}
     echo "command=/usr/sbin/mysqld \
         --basedir=/usr \
@@ -800,13 +823,14 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "numprocs=1" >> ${configFile}
     echo "startretries=10" >> ${configFile}
     echo "exitcodes=0" >> ${configFile}
-    echo "stopsignal=KILL" >> ${configFile}
+    echo "stopsignal=INT" >> ${configFile}
     echo "stopwaitsecs=10" >> ${configFile}
     echo "redirect_stderr=true" >> ${configFile}
     echo "stdout_logfile_maxbytes=1024MB" >> ${configFile}
     echo "stdout_logfile_backups=10" >> ${configFile}
     echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${configFile}
     configFile=/home/${userName}/${installDir}/config/supervisor/nginx.conf
+    rm -f ${configFile}
     echo "[program: nginx]" > ${configFile}
     echo "command=/usr/sbin/nginx -g 'daemon off;'" >> ${configFile}
     echo "autorestart=true" >> ${configFile}
@@ -823,7 +847,7 @@ if [[ ${inDocker} == "yes" ]]; then
     service mysql stop
     sleep 2
     if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
-        ln -s /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
+        ln -fs /home/${userName}/${installDir}/config/supervisor/mysql.conf /etc/supervisor/conf.d/mysql.conf
     fi
     i=$(ps aux |grep -c supervisor || true)
     if [[ ${i} -le 1 ]]; then
@@ -891,7 +915,7 @@ if [[ ${productionMode} == "yes" ]]; then
     if [[ ${inDocker} == "yes" ]]; then
         # 使用supervisor管理nginx进程
         if [[ ! -e /etc/supervisor/conf.d/nginx.conf ]]; then
-            ln -s /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
+            ln -fs /home/${userName}/${installDir}/config/supervisor/nginx.conf /etc/supervisor/conf.d/nginx.conf
         fi
         i=$(ps aux |grep -c supervisor || true)
         if [[ ${i} -le 1 ]]; then
@@ -941,38 +965,12 @@ EOF
     done
     # 确认supervisor进程存在
     i=$(ps aux |grep -c supervisor || true)
-    echo "supervisor进程：${i}"
     if [[ ${i} -le 1 ]]; then
         /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
     else
         /usr/bin/supervisorctl reload
     fi
 fi
-# 修正权限
-echo "===================修正权限==================="
-chown -R ${userName}:${userName} /home/${userName}/${installDir}/*
-# 清理垃圾,ERPNext安装完毕
-echo "===================清理垃圾,ERPNext安装完毕==================="
-apt clean
-apt autoremove -y
-rm -rf /var/lib/apt/lists/*
-pip cache purge
-npm cache clean --force
-yarn cache clean
-su - ${userName} <<EOF
-cd ~/${installDir}
-npm cache clean --force
-yarn cache clean
-EOF
-# 确认安装
-if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
-    clear
-fi
-su - ${userName} <<EOF
-cd ~/${installDir}
-echo "===================确认安装==================="
-bench version
-EOF
 # 如果有设定端口，修改为设定端口
 if [[ ${webPort} != "" ]]; then
     echo "===================设置web端口为：${webPort}==================="
@@ -1005,7 +1003,7 @@ if [[ ${webPort} != "" ]]; then
             if [[ -e ${f} ]]; then
                 n=($(sed -n "/^web.*port.*/=" ${f}))
                 # 如找到替换为可用指令
-                if [ ${n} ]; then
+                if [[ ${n} ]]; then
                     sed -i "${n} c web: bench serve --port ${webPort}" ${f}
                     su - ${userName} bash -c "cd ~/${installDir}; bench restart"
                     echo "web端口号修改为："${webPort}
@@ -1022,7 +1020,39 @@ if [[ ${webPort} != "" ]]; then
         echo "设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
         warnArr[${#warnArr[@]}]="设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
     fi
+else
+    # 没有设定端口号，显示默认端口号。
+    if [[ ${productionMode} == "yes" ]]; then
+        webPort="80"
+    else
+        webPort="8000"
+    fi
 fi
+# 修正权限
+echo "===================修正权限==================="
+chown -R ${userName}:${userName} /home/${userName}/${installDir}/*
+# 清理垃圾,ERPNext安装完毕
+echo "===================清理垃圾,ERPNext安装完毕==================="
+apt clean
+apt autoremove -y
+rm -rf /var/lib/apt/lists/*
+pip cache purge
+npm cache clean --force
+yarn cache clean
+su - ${userName} <<EOF
+cd ~/${installDir}
+npm cache clean --force
+yarn cache clean
+EOF
+# 确认安装
+if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
+    clear
+fi
+su - ${userName} <<EOF
+cd ~/${installDir}
+echo "===================确认安装==================="
+bench version
+EOF
 echo "===================主要运行环境==================="
 for i in "${rteArr[@]}"
 do
@@ -1037,12 +1067,12 @@ if [[ ${#warnArr[@]} != 0 ]]; then
 fi
 if [[ ${productionMode} == "yes" ]]; then
     if [[ -e /etc/supervisor/conf.d/${installDir}.conf ]]; then
-        echo "已开启生产模式。请访问http://ip访问网站。默认监听80端口。"
+        echo "已开启生产模式。使用ip或域名访问网站。监听${webPort}端口。"
     else
         echo "已配置开启生产模式。但supervisor配置文件生成失败，请排除错误后手动开启。"
     fi
 else
     echo "使用su - ${userName}转到${userName}用户进入~/${installDir}目录"
-    echo "运行bench start启动项目，默认端口号8000"
+    echo "运行bench start启动项目，使用ip或域名访问网站。监听${webPort}端口。"
 fi
 exit 0
