@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.2 2022.08.11   修正在docker镜像安装的错误。
+# v0.3 2022.09.13   添加管理员账号密码提示
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -27,11 +27,12 @@ else
 fi
 # 设定参数默认值，如果你不知道干嘛的就别改。
 # 只适用于纯净版ubuntu22.04并使用root用户运行，其他系统请自行重新适配。
-# 会安装python3.10，mariadb10.3，redis6.2以及erpnext的其他系统需求。
+# 会安装python3.10，mariadb，redis以及erpnext的其他系统需求。
 # 自定义选项使用方法例：./install.erpnext.sh benchVersion=5.12.1 frappePath=https://gitee.com/mirrors/frappe branch=version-14-beta
+# -q启用静默模式，-d适配docker ubuntu22.04镜像内安装。
+# 静默模式会默认删除已存在的安装目录和当前设置站点重名的数据库及用户。请谨慎使用。
 # branch参数会同时修改frappe和erpnext的分支。
 # 也可以直接修改下列变量
-# 静默模式会默认删除已存在的安装目录和当前设置站点重名的数据库及用户。请谨慎使用。
 mariadbPath=""
 mariadbPort="3306"
 mariadbRootPassword="Pass1234"
@@ -707,7 +708,7 @@ npm install -g yarn
 # 修改yarn源
 # 在执行前确定有操作权限
 # yarn config list
-yarn config set registry https://registry.npm.taobao.org --global
+yarn config set registry https://registry.npmmirror.com --global
 echo "===================yarn已修改为国内源==================="
 # 基础需求安装完毕。
 echo "===================基础需求安装完毕。==================="
@@ -726,7 +727,7 @@ export LANG=en_US.UTF-8
 # 修改用户yarn源
 # 在执行前确定有操作权限
 # yarn config list
-yarn config set registry https://registry.npm.taobao.org --global
+yarn config set registry https://registry.npmmirror.com --global
 echo "===================用户yarn已修改为国内源==================="
 EOF
 # 重启redis-server和mariadb
@@ -881,7 +882,8 @@ EOF
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================获取Payments应用==================="
-bench get-app payments
+# bench get-app payments
+bench get-app https://gitee.com/phipsoft/payments
 EOF
 # 建立新网站
 su - ${userName} <<EOF
@@ -1085,6 +1087,7 @@ if [[ ${#warnArr[@]} != 0 ]]; then
         echo ${i}
     done
 fi
+echo "管理员账号：administrator，密码：${adminPassword}。"
 if [[ ${productionMode} == "yes" ]]; then
     if [[ -e /etc/supervisor/conf.d/${installDir}.conf ]]; then
         echo "已开启生产模式。使用ip或域名访问网站。监听${webPort}端口。"

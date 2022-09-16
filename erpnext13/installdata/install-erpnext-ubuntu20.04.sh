@@ -709,7 +709,7 @@ npm install -g yarn
 # 修改yarn源
 # 在执行前确定有操作权限
 # yarn config list
-yarn config set registry https://registry.npm.taobao.org --global
+yarn config set registry https://registry.npmmirror.com --global
 echo "===================yarn已修改为国内源==================="
 # 基础需求安装完毕。
 echo "===================基础需求安装完毕。==================="
@@ -728,7 +728,7 @@ export LANG=en_US.UTF-8
 # 修改用户yarn源
 # 在执行前确定有操作权限
 # yarn config list
-yarn config set registry https://registry.npm.taobao.org --global
+yarn config set registry https://registry.npmmirror.com --global
 echo "===================用户yarn已修改为国内源==================="
 EOF
 # 重启redis-server和mariadb
