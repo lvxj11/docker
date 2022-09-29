@@ -3,6 +3,7 @@
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
+cat /etc/os-release
 osVer=$(cat /etc/os-release | grep 'Ubuntu 22.04' || true)
 if [[ ${osVer} == '' ]]; then
     echo '脚本只在ubuntu22.04版本测试通过。其它系统版本需要重新适配。退出安装。'
