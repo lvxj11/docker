@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.3 2022.09.13   添加管理员账号密码提示
+# v0.3 2022.09.23   添加管理员账号密码提示。
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -913,8 +913,8 @@ EOF
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================安装中文本地化==================="
-bench get-app ${erpnextBranch} https://gitee.com/phipsoft/zh_chinese_language.git
-bench --site ${siteName} install-app zh_chinese_language
+bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
+bench --site ${siteName} install-app erpnext_chinese
 EOF
 # 清理工作台
 su - ${userName} <<EOF
@@ -1067,9 +1067,6 @@ npm cache clean --force
 yarn cache clean
 EOF
 # 确认安装
-if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
-    clear
-fi
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================确认安装==================="
