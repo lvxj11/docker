@@ -1,5 +1,6 @@
 #!/bin/bash
-# v2.3 2022.07.09
+# v2.4 2022.11.03
+# fix: 如erpnextPath为空则从官方地址安装
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu20.04
@@ -253,6 +254,9 @@ if [[ ${benchVersion} != "" ]];then
 fi
 if [[ ${frappePath} != "" ]];then
     frappePath="--frappe-path ${frappePath}"
+fi
+if [[ ${erpnextPath} != "" ]];then
+    erpnextPath="erpnext"
 fi
 if [[ ${frappeBranch} != "" ]];then
     frappeBranch="--frappe-branch ${frappeBranch}"
