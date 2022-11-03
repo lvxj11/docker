@@ -256,7 +256,7 @@ if [[ ${frappePath} != "" ]];then
     frappePath="--frappe-path ${frappePath}"
 fi
 if [[ ${erpnextPath} != "" ]];then
-    erpnextPath="erpnext"
+    erpnextPath="https://github.com/frappe/erpnext.git"
 fi
 if [[ ${frappeBranch} != "" ]];then
     frappeBranch="--frappe-branch ${frappeBranch}"
@@ -865,7 +865,7 @@ fi
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================获取erpnext应用==================="
-bench get-app ${erpnextBranch} ${erpnextPath}
+bench get-app ${erpnextBranch} erpnext ${erpnextPath}
 # cd ~/${installDir} && ./env/bin/pip3 install -e apps/erpnext/
 EOF
 # 建立新网站
@@ -1069,6 +1069,7 @@ if [[ ${#warnArr[@]} != 0 ]]; then
         echo ${i}
     done
 fi
+echo "管理员账号：administrator，密码：${adminPassword}。"
 if [[ ${productionMode} == "yes" ]]; then
     if [[ -e /etc/supervisor/conf.d/${installDir}.conf ]]; then
         echo "已开启生产模式。使用ip或域名访问网站。监听${webPort}端口。"
