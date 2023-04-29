@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.3 2022.09.23   添加管理员账号密码提示。
+# v0.4 2023.04.29   修改node.js下载地址为国内镜像。
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -668,17 +668,28 @@ source /etc/profile
 if ! type node >/dev/null 2>&1; then
     # 获取最新版nodejs-v16，并安装
     echo "==========获取最新版nodejs-v16，并安装=========="
-    nodejs0=$(curl -sL https://nodejs.org/download/release/latest-v16.x/ | grep -o node-v16.*-linux-x64.tar.xz)
-    nodejs1=${nodejs0%%.tar*}
-    echo "nodejs16最新版本为：${nodejs1}"
-    echo "即将安装nodejs16到/usr/local/lib/nodejs/${nodejs1}"
-    wget https://nodejs.org/download/release/latest-v16.x/${nodejs1}.tar.xz -P /tmp/
-    mkdir -p /usr/local/lib/nodejs
-    tar -xJf /tmp/${nodejs1}.tar.xz -C /usr/local/lib/nodejs/
-    echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
-    echo "export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:\$PATH" >> ~/.bashrc
-    export PATH=/usr/local/lib/nodejs/${nodejs1}/bin:$PATH
-    source /etc/profile
+    if [ -z $nodejsLink ] ; then
+        nodejsLink=$(curl -sL https://registry.npmmirror.com/-/binary/node/latest-v16.x/ | grep -oE "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*node-v16\.[0-9]{1,2}\.[0-9]{1,2}"-linux-x64.tar.xz | tail -1)
+    else
+        echo 已自定义nodejs下载链接，开始下载
+    fi
+    if [ -z $nodejsLink ] ; then
+        echo 没有匹配到node.js下载地址，请检查网络或代码。
+        exit 1
+    else
+        nodejsFileName=${nodejsLink##*/}
+        nodejsVer=`t=(${nodejsFileName//-/ });echo ${t[1]}`
+        echo "nodejs16最新版本为：${nodejsVer}"
+        echo "即将安装nodejs16到/usr/local/lib/nodejs/${nodejsVer}"
+        wget $nodejsLink -P /tmp/
+        mkdir -p /usr/local/lib/nodejs
+        tar -xJf /tmp/${nodejsFileName} -C /usr/local/lib/nodejs/
+        mv /usr/local/lib/nodejs/${nodejsFileName%%.tar*} /usr/local/lib/nodejs/${nodejsVer}
+        echo "export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
+        echo "export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:\$PATH" >> ~/.bashrc
+        export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:$PATH
+        source /etc/profile
+    fi
 fi
 # 环境需求检查,node
 if type node >/dev/null 2>&1; then
