@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.4 2023.04.29   修改node.js下载地址为国内镜像。
+# v0.5 2023.09.18 修改node.js安装版本为18。
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -550,7 +550,7 @@ if ! type redis-server >/dev/null 2>&1; then
     echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/redis.list
     apt update
     # redisV=($(apt-cache madison redis | grep -o 6:6.2.*jammy1 | head -1))
-    # echo "redis6.2最新版本为：${redisV[0]}"
+    # echo "redis最新版本为：${redisV[0]}"
     echo "即将安装redis"
     DEBIAN_FRONTEND=noninteractive apt install -y \
         redis-tools \
@@ -663,13 +663,13 @@ sed -i "/^fs.inotify.max_user_watches=.*/d" /etc/sysctl.conf
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
 # 使其立即生效
 /sbin/sysctl -p
-# 检查是否安装nodejs16
+# 检查是否安装nodejs18
 source /etc/profile
 if ! type node >/dev/null 2>&1; then
-    # 获取最新版nodejs-v16，并安装
-    echo "==========获取最新版nodejs-v16，并安装=========="
+    # 获取最新版nodejs-v18，并安装
+    echo "==========获取最新版nodejs-v18，并安装=========="
     if [ -z $nodejsLink ] ; then
-        nodejsLink=$(curl -sL https://registry.npmmirror.com/-/binary/node/latest-v16.x/ | grep -oE "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*node-v16\.[0-9]{1,2}\.[0-9]{1,2}"-linux-x64.tar.xz | tail -1)
+        nodejsLink=$(curl -sL https://registry.npmmirror.com/-/binary/node/latest-v18.x/ | grep -oE "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*node-v18\.[0-9][0-9]\.[0-9]{1,2}"-linux-x64.tar.xz | tail -1)
     else
         echo 已自定义nodejs下载链接，开始下载
     fi
@@ -679,8 +679,8 @@ if ! type node >/dev/null 2>&1; then
     else
         nodejsFileName=${nodejsLink##*/}
         nodejsVer=`t=(${nodejsFileName//-/ });echo ${t[1]}`
-        echo "nodejs16最新版本为：${nodejsVer}"
-        echo "即将安装nodejs16到/usr/local/lib/nodejs/${nodejsVer}"
+        echo "nodejs18最新版本为：${nodejsVer}"
+        echo "即将安装nodejs18到/usr/local/lib/nodejs/${nodejsVer}"
         wget $nodejsLink -P /tmp/
         mkdir -p /usr/local/lib/nodejs
         tar -xJf /tmp/${nodejsFileName} -C /usr/local/lib/nodejs/
@@ -693,13 +693,13 @@ if ! type node >/dev/null 2>&1; then
 fi
 # 环境需求检查,node
 if type node >/dev/null 2>&1; then
-    result=$(node -v | grep "v16." || true)
+    result=$(node -v | grep "v18." || true)
     if [[ ${result} == "" ]]
     then
-        echo '==========已存在node，但不是v16版。这将有可能导致一些问题。建议卸载node后重试。=========='
-        warnArr[${#warnArr[@]}]='node不是推荐的v16版本。'
+        echo '==========已存在node，但不是v18版。这将有可能导致一些问题。建议卸载node后重试。=========='
+        warnArr[${#warnArr[@]}]='node不是推荐的v18版本。'
     else
-        echo '==========已安装node16=========='
+        echo '==========已安装node18=========='
     fi
     rteArr[${#rteArr[@]}]='node '$(node -v)
 else
@@ -895,7 +895,7 @@ su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================获取Payments应用==================="
 # bench get-app payments
-bench get-app https://gitee.com/phipsoft/payments
+bench get-app https://gitee.com/qinyanwan/payments
 EOF
 # 建立新网站
 su - ${userName} <<EOF
