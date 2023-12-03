@@ -30,6 +30,12 @@ class Trojan(BaseClient):
 					else:
 						self._process = subprocess.Popen(["./clients/trojan/trojan.exe","--config","{}/config.json".format(os.getcwd())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 					logger.info("Starting trojan with server %s:%d" % (config["server"],config["server_port"]))
+				elif (self._checkPlatform() == "Linux" or self._checkPlatform() == "MacOS"):
+					if (logger.level == logging.DEBUG):
+						self._process = subprocess.Popen(["trojan","--config","{}/config.json".format(os.getcwd())])
+					else:
+						self._process = subprocess.Popen(["trojan","--config","{}/config.json".format(os.getcwd())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+					logger.info("Starting trojan with server %s:%d" % (config["server"],config["server_port"]))
 				else:
 					logger.critical("Your system does not supported.Please contact developer.")
 					sys.exit(1)
