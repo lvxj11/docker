@@ -15,7 +15,7 @@ WORKDIR /SSRSpeedN
 # 运行基础软件安装脚本。
 RUN /bin/bash -c "chmod +x /start.sh \
     && apt update && DEBIAN_FRONTEND=noninteractive apt upgrade -y \
-    && DEBIAN_FRONTEND=noninteractive apt install -y shadowsocks-libev simple-obfs \
+    && DEBIAN_FRONTEND=noninteractive apt install -y shadowsocks-libev simple-obfs trojan \
     && cd /SSRSpeedN \
     && pip install --upgrade pip \
     && pip install six Pillow==9.5.0 \
