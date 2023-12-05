@@ -890,12 +890,14 @@ echo "===================获取erpnext应用==================="
 bench get-app ${erpnextBranch} ${erpnextPath}
 # cd ~/${installDir} && ./env/bin/pip3 install -e apps/erpnext/
 EOF
-# 获取Payments应用
+# 获取其它应用
 su - ${userName} <<EOF
 cd ~/${installDir}
-echo "===================获取Payments应用==================="
+echo "===================获取其它应用==================="
 # bench get-app payments
 bench get-app ${erpnextBranch} https://gitee.com/qinyanwan/payments
+# bench get-app https://github.com/frappe/print_designer
+bench get-app https://gitee.com/qinyanwan/print_designer
 EOF
 # 建立新网站
 su - ${userName} <<EOF
@@ -909,6 +911,7 @@ cd ~/${installDir}
 echo "===================安装erpnext应用到新网站==================="
 bench --site ${siteName} install-app payments
 bench --site ${siteName} install-app erpnext
+bench --site ${siteName} install-app print_designer
 EOF
 # 站点配置
 su - ${userName} <<EOF
