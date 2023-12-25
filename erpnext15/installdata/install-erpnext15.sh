@@ -634,7 +634,7 @@ sed -i "/^${userName}.*/d" /etc/sudoers
 echo "${userName} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/${userName}
 sed -i "/^export.*${userName}.*/d" /etc/sudoers
-echo "export PATH=/home/${userName}/.local/bin:\$PATH" >> /home/${userName}/.bashrc
+# echo "export PATH=/home/${userName}/.local/bin:\$PATH" >> /home/${userName}/.bashrc
 # 修改用户pip默认源加速国内安装
 cp -af /root/.pip /home/${userName}/
 # 修正用户目录权限
@@ -687,6 +687,7 @@ if ! type node >/dev/null 2>&1; then
         mv /usr/local/lib/nodejs/${nodejsFileName%%.tar*} /usr/local/lib/nodejs/${nodejsVer}
         echo "export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:\$PATH" >> /etc/profile.d/nodejs.sh
         echo "export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:\$PATH" >> ~/.bashrc
+        echo "export PATH=/home/${userName}/.local/bin:/usr/local/lib/nodejs/${nodejsVer}/bin:\$PATH" >> /home/${userName}/.bashrc
         export PATH=/usr/local/lib/nodejs/${nodejsVer}/bin:$PATH
         source /etc/profile
     fi
