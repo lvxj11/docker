@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.5 2023.09.18   修改node.js安装版本为18。
+# v0.6 2025.01.18   添加依赖
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -41,9 +41,11 @@ adminPassword="admin"
 installDir="frappe-bench"
 userName="frappe"
 benchVersion=""
-frappePath="https://gitee.com/mirrors/frappe"
+# frappePath="https://gitee.com/mirrors/frappe"
+frappePath=""
 frappeBranch="version-15"
-erpnextPath="https://gitee.com/mirrors/erpnext"
+# erpnextPath="https://gitee.com/mirrors/erpnext"
+erpnextPath="https://github.com/frappe/erpnext"
 erpnextBranch="version-15"
 siteName="site1.local"
 siteDbPassword="Pass1234"
@@ -312,7 +314,10 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     xvfb \
     libfontconfig \
     wkhtmltopdf \
-    supervisor
+    supervisor \
+    pkg-config \
+    build-essential \
+    libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev
 # 环境需求检查
 rteArr=()
 warnArr=()
@@ -663,13 +668,13 @@ sed -i "/^fs.inotify.max_user_watches=.*/d" /etc/sysctl.conf
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf
 # 使其立即生效
 /sbin/sysctl -p
-# 检查是否安装nodejs18
+# 检查是否安装nodejs20
 source /etc/profile
 if ! type node >/dev/null 2>&1; then
-    # 获取最新版nodejs-v18，并安装
-    echo "==========获取最新版nodejs-v18，并安装=========="
+    # 获取最新版nodejs-v20，并安装
+    echo "==========获取最新版nodejs-v20，并安装=========="
     if [ -z $nodejsLink ] ; then
-        nodejsLink=$(curl -sL https://registry.npmmirror.com/-/binary/node/latest-v18.x/ | grep -oE "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*node-v18\.[0-9][0-9]\.[0-9]{1,2}"-linux-x64.tar.xz | tail -1)
+        nodejsLink=$(curl -sL https://registry.npmmirror.com/-/binary/node/latest-v20.x/ | grep -oE "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*node-v20\.[0-9][0-9]\.[0-9]{1,2}"-linux-x64.tar.xz | tail -1)
     else
         echo 已自定义nodejs下载链接，开始下载
     fi
@@ -679,8 +684,8 @@ if ! type node >/dev/null 2>&1; then
     else
         nodejsFileName=${nodejsLink##*/}
         nodejsVer=`t=(${nodejsFileName//-/ });echo ${t[1]}`
-        echo "nodejs18最新版本为：${nodejsVer}"
-        echo "即将安装nodejs18到/usr/local/lib/nodejs/${nodejsVer}"
+        echo "nodejs20最新版本为：${nodejsVer}"
+        echo "即将安装nodejs20到/usr/local/lib/nodejs/${nodejsVer}"
         wget $nodejsLink -P /tmp/
         mkdir -p /usr/local/lib/nodejs
         tar -xJf /tmp/${nodejsFileName} -C /usr/local/lib/nodejs/
@@ -694,13 +699,13 @@ if ! type node >/dev/null 2>&1; then
 fi
 # 环境需求检查,node
 if type node >/dev/null 2>&1; then
-    result=$(node -v | grep "v18." || true)
+    result=$(node -v | grep "v20." || true)
     if [[ ${result} == "" ]]
     then
-        echo '==========已存在node，但不是v18版。这将有可能导致一些问题。建议卸载node后重试。=========='
-        warnArr[${#warnArr[@]}]='node不是推荐的v18版本。'
+        echo '==========已存在node，但不是v20版。这将有可能导致一些问题。建议卸载node后重试。=========='
+        warnArr[${#warnArr[@]}]='node不是推荐的v20版本。'
     else
-        echo '==========已安装node18=========='
+        echo '==========已安装node20=========='
     fi
     rteArr[${#rteArr[@]}]='node '$(node -v)
 else
@@ -930,9 +935,10 @@ su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================安装中文本地化==================="
 bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
-bench get-app https://gitee.com/yuzelin/erpnext_oob.git ${erpnextBranch}
+bench get-app https://gitee.com/yuzelin/erpnext_oob.git  ${erpnextBranch}
 bench --site ${siteName} install-app erpnext_chinese
 bench --site ${siteName} install-app erpnext_oob
+bench clear-cache && bench clear-website-cache
 EOF
 # 清理工作台
 su - ${userName} <<EOF
@@ -1118,5 +1124,8 @@ if [[ ${inDocker} == "yes" ]]; then
     /usr/bin/supervisorctl status
     # echo "停止所有进程。"
     # /usr/bin/supervisorctl stop all
+fi
+exit 0
+p all
 fi
 exit 0
