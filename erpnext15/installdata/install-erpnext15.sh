@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.6 2025.01.18   添加依赖
+# v0.7 2025.06.27   添加依赖
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -749,16 +749,18 @@ yarn config set registry https://registry.npmmirror.com --global
 echo "===================用户yarn已修改为国内源==================="
 EOF
 # 重启redis-server和mariadb
-echo "===================重启redis-server和mariadb==================="
-# service redis-server restart
-# service mariadb restart
-/etc/init.d/redis-server restart
-/etc/init.d/mariadb restart
-# 等待2秒
-for i in $(seq -w 2); do
-    echo ${i}
-    sleep 1
-done
+# echo "===================重启redis-server和mariadb==================="
+# # service redis-server restart
+# # service mariadb restart
+# # /etc/init.d/redis-server restart
+# redis-cli shutdown
+# redis-server /etc/redis/redis.conf
+# /etc/init.d/mariadb restart
+# # 等待2秒
+# for i in $(seq -w 2); do
+#     echo ${i}
+#     sleep 1
+# done
 # 适配docker
 echo "判断是否适配docker"
 if [[ ${inDocker} == "yes" ]]; then
@@ -892,18 +894,11 @@ EOF
 # 获取erpnext应用
 su - ${userName} <<EOF
 cd ~/${installDir}
-echo "===================获取erpnext应用==================="
+echo "===================获取应用==================="
 bench get-app ${erpnextBranch} ${erpnextPath}
-# cd ~/${installDir} && ./env/bin/pip3 install -e apps/erpnext/
-EOF
-# 获取其它应用
-su - ${userName} <<EOF
-cd ~/${installDir}
-echo "===================获取其它应用==================="
-# bench get-app payments
-bench get-app ${erpnextBranch} https://gitee.com/qinyanwan/payments
-# bench get-app https://github.com/frappe/print_designer
-bench get-app https://gitee.com/qinyanwan/print_designer
+bench get-app payments
+# bench get-app ${erpnextBranch} hrms
+bench get-app print_designer
 EOF
 # 建立新网站
 su - ${userName} <<EOF
@@ -917,6 +912,7 @@ cd ~/${installDir}
 echo "===================安装erpnext应用到新网站==================="
 bench --site ${siteName} install-app payments
 bench --site ${siteName} install-app erpnext
+# bench --site ${siteName} install-app hrms
 bench --site ${siteName} install-app print_designer
 EOF
 # 站点配置
@@ -935,9 +931,7 @@ su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================安装中文本地化==================="
 bench get-app https://gitee.com/yuzelin/erpnext_chinese.git
-bench get-app https://gitee.com/yuzelin/erpnext_oob.git  ${erpnextBranch}
 bench --site ${siteName} install-app erpnext_chinese
-bench --site ${siteName} install-app erpnext_oob
 bench clear-cache && bench clear-website-cache
 EOF
 # 清理工作台
