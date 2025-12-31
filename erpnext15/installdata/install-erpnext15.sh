@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.7 2025.06.27   添加依赖
+# v0.8 2025.06.28 适配外部MariaDB容器（固定数据库信息：192.168.1.100/3306 root/jiangbn6）
 set -e
 # 脚本运行环境检查
 # 检测是否ubuntu22.04
@@ -26,25 +26,16 @@ if [ "$(id -u)" != "0" ]; then
 else
     echo '执行用户检测通过...'
 fi
-# 设定参数默认值，如果你不知道干嘛的就别改。
-# 只适用于纯净版ubuntu22.04并使用root用户运行，其他系统请自行重新适配。
-# 会安装python3.10，mariadb，redis以及erpnext的其他系统需求。
-# 自定义选项使用方法例：./install-erpnext15.sh benchVersion=5.12.1 frappePath=https://gitee.com/mirrors/frappe branch=version-14-beta
-# -q启用静默模式，-d适配docker ubuntu22.04镜像内安装。
-# 静默模式会默认删除已存在的安装目录和当前设置站点重名的数据库及用户。请谨慎使用。
-# branch参数会同时修改frappe和erpnext的分支。
-# 也可以直接修改下列变量
-mariadbPath=""
-mariadbPort="3306"
-mariadbRootPassword="Pass1234"
+# 设定参数默认值（已按你的数据库信息固定）
+mariadbHost="192.168.1.100"  # 优先使用内网IP（容器互通），公网nas.jiangbn6.cn可运行时覆盖
+mariadbPort="3306"           # 固定数据库端口
+mariadbRootPassword="jiangbn6"  # 固定数据库root密码
 adminPassword="admin"
 installDir="frappe-bench"
 userName="frappe"
 benchVersion=""
-# frappePath="https://gitee.com/mirrors/frappe"
 frappePath=""
 frappeBranch="version-15"
-# erpnextPath="https://gitee.com/mirrors/erpnext"
 erpnextPath="https://github.com/frappe/erpnext"
 erpnextBranch="version-15"
 siteName="site1.local"
@@ -80,10 +71,8 @@ do
             if [[ (${t} == "") && (${arg} -ge 80) && (${arg} -lt 65535) ]]; then
                 webPort=${arg}
                 echo "设定web端口为${webPort}。"
-                # 只有收到正确的端口参数才跳转下一个参数，否则将继续识别当前参数。
                 continue
             else
-                # 只有-p没有正确的参数会将webPort参数置空
                 webPort=""
             fi
             ;;
@@ -119,6 +108,14 @@ do
         "benchVersion")
             benchVersion=${arg1}
             echo "设置bench版本为： ${benchVersion}"
+            ;;
+        "mariadbHost")
+            mariadbHost=${arg1}
+            echo "设置外部数据库主机：${mariadbHost}"
+            ;;
+        "mariadbPort")
+            mariadbPort=${arg1}
+            echo "设置外部数据库端口：${mariadbPort}"
             ;;
         "mariadbRootPassword")
             mariadbRootPassword=${arg1}
@@ -196,7 +193,7 @@ done
 if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
     clear
 fi
-echo "数据库地址："${mariadbPath}
+echo "数据库地址："${mariadbHost}
 echo "数据库端口："${mariadbPort}
 echo "数据库root用户密码："${mariadbRootPassword}
 echo "管理员密码："${adminPassword}
@@ -214,6 +211,10 @@ echo "是否静默模式安装："${quiet}
 echo "如有重名目录或数据库是否删除："${removeDuplicate}
 echo "是否为docker镜像内安装适配："${inDocker}
 echo "是否开启生产模式："${productionMode}
+
+# 检查外部数据库参数（已固定，无需再验证为空）
+echo "✅ 外部数据库参数已固定：主机=${mariadbHost} 端口=${mariadbPort} 密码=${mariadbRootPassword}"
+
 # 等待确认参数
 if [[ ${quiet} != "yes" ]];then
     echo "===================请确认已设定参数并选择安装方式==================="
@@ -226,7 +227,7 @@ if [[ ${quiet} != "yes" ]];then
         开发模式需要手动启动“bench start”，启动后访问8000端口。\n \
         生产模式无需手动启动，使用nginx反代并监听80端口\n \
         此外生产模式会使用supervisor管理进程增强可靠性，并预编译代码开启redis缓存，提高应用性能。\n \
-        在Docker镜像里安装会适配其进程启动方式将mariadb及nginx进程也交给supervisor管理。 \n \
+        在Docker镜像里安装会适配其进程启动方式将nginx进程交给supervisor管理。 \n \
         docker镜像主线程：“sudo supervisord -n -c /etc/supervisor/supervisord.conf”。请自行配置到镜像"
     read -r -p "请选择： " input
     case ${input} in
@@ -289,7 +290,7 @@ deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ jammy-security main restricted u
 EOF"
     echo "===================apt已修改为国内源==================="
 fi
-# 安装基础软件
+# 安装基础软件（移除mariadb相关包）
 echo "===================安装基础软件==================="
 apt update
 DEBIAN_FRONTEND=noninteractive apt upgrade -y
@@ -308,8 +309,6 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     python3-testresources \
     git \
     software-properties-common \
-    mariadb-server \
-    mariadb-client \
     libmysqlclient-dev \
     xvfb \
     libfontconfig \
@@ -394,68 +393,25 @@ else
     echo "==========wkhtmltox安装失败退出脚本！=========="
     exit 1
 fi
-# 环境需求检查,MariaDB
-# https://mirrors.aliyun.com/mariadb/mariadb-10.6.8/bintar-linux-systemd-x86_64/mariadb-10.6.8-linux-systemd-x86_64.tar.gz
-if type mysql >/dev/null 2>&1; then
-    result=$(mysql -V | grep "10.6" || true)
-    if [[ "${result}" == "" ]]
-    then
-        echo '==========已安装MariaDB，但不是推荐的10.6版本。=========='
-        warnArr[${#warnArr[@]}]='MariaDB不是推荐的10.6版本。'
-    else
-        echo '==========已安装MariaDB10.6=========='
-    fi
-    rteArr[${#rteArr[@]}]=$(mysql -V)
-else
-    echo "==========MariaDB安装失败退出脚本！=========="
+
+# 测试外部数据库连接（固定你的数据库信息）
+echo "===================测试外部数据库连接==================="
+if ! mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "quit" >/dev/null 2>&1; then
+    echo "❌ 错误：无法连接到外部数据库！"
+    echo "连接信息：主机=${mariadbHost}, 端口=${mariadbPort}, 用户=root, 密码=jiangbn6"
+    echo "若需使用公网地址，请运行时添加参数：mariadbHost=nas.jiangbn6.cn"
     exit 1
-fi
-# 修改数据库配置文件
-# 如果之前修改过则跳过
-n=$(cat /etc/mysql/my.cnf | grep -c "# ERPNext install script added" || true)
-if [[ ${n} == 0 ]]; then
-    echo "===================修改数据库配置文件==================="
-    echo "# ERPNext install script added" >> /etc/mysql/my.cnf
-    echo "[mysqld]" >> /etc/mysql/my.cnf
-    echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
-    echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
-    echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
-    echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
-    echo "" >> /etc/mysql/my.cnf
-    echo "[mysql]" >> /etc/mysql/my.cnf
-    echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
-fi
-/etc/init.d/mariadb restart
-# 等待2秒
-for i in $(seq -w 2); do
-    echo ${i}
-    sleep 1
-done
-# 授权远程访问并修改密码
-if mysql -uroot -e quit >/dev/null 2>&1
-then
-    echo "===================修改数据库root本地访问密码==================="
-    mysqladmin -v -uroot password ${mariadbRootPassword}
-elif mysql -uroot -p${mariadbRootPassword} -e quit >/dev/null 2>&1
-then
-    echo "===================数据库root本地访问密码已配置==================="
 else
-    echo "===================数据库root本地访问密码错误==================="
-    exit 1
+    echo "✅ 外部数据库连接测试通过"
 fi
-echo "===================修改数据库root远程访问密码==================="
-mysql -u root -p${mariadbRootPassword} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}' WITH GRANT OPTION;"
-echo "===================刷新权限表==================="
-mysqladmin -v -uroot -p${mariadbRootPassword} reload
-sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
-echo "===================数据库配置完成==================="
+
 # 检查数据库是否有同名用户。如有，选择处理方式。
 echo "==========检查数据库残留=========="
 while true
 do
     siteSha1=$(echo -n ${siteName} | sha1sum)
     siteSha1=_${siteSha1:0:16}
-    dbUser=$(mysql -u root -p${mariadbRootPassword} -e "use mysql;SELECT User,Host FROM user;" | grep ${siteSha1} || true)
+    dbUser=$(mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "use mysql;SELECT User,Host FROM user;" | grep ${siteSha1} || true)
     if [[ ${dbUser} != "" ]]; then
         if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
             clear
@@ -470,12 +426,12 @@ do
         if [[ ${quiet} == "yes" ]]; then
             echo '当前为静默模式，将自动按第2项执行。'
             # 删除重名数据库
-            mysql -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
+            mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
             arrUser=(${dbUser})
             # 如果重名用户有多个host，以步进2取用户名和用户host并删除。
             for ((i=0; i<${#arrUser[@]}; i=i+2))
             do
-                mysql -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
+                mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
             done
             echo "已删除数据库及用户，继续安装！"
             continue
@@ -498,11 +454,11 @@ do
                 continue
                 ;;
             '2')
-                mysql -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
+                mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
                 arrUser=(${dbUser})
                 for ((i=0; i<${#arrUser[@]}; i=i+2))
                 do
-                    mysql -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
+                    mysql -h ${mariadbHost} -P ${mariadbPort} -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
                 done
                 echo "已删除数据库及用户，继续安装！"
                 continue
@@ -554,8 +510,6 @@ if ! type redis-server >/dev/null 2>&1; then
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
     echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/redis.list
     apt update
-    # redisV=($(apt-cache madison redis | grep -o 6:6.2.*jammy1 | head -1))
-    # echo "redis6.2最新版本为：${redisV[0]}"
     echo "即将安装redis"
     DEBIAN_FRONTEND=noninteractive apt install -y \
         redis-tools \
@@ -579,7 +533,6 @@ else
 fi
 # 修改pip默认源加速国内安装
 # 在执行前确定有操作权限
-# pip3 config list
 mkdir -p /root/.pip
 echo '[global]' > /root/.pip/pip.conf
 echo 'index-url=https://pypi.tuna.tsinghua.edu.cn/simple' >> /root/.pip/pip.conf
@@ -639,7 +592,6 @@ sed -i "/^${userName}.*/d" /etc/sudoers
 echo "${userName} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 mkdir -p /home/${userName}
 sed -i "/^export.*${userName}.*/d" /etc/sudoers
-# echo "export PATH=/home/${userName}/.local/bin:\$PATH" >> /home/${userName}/.bashrc
 # 修改用户pip默认源加速国内安装
 cp -af /root/.pip /home/${userName}/
 # 修正用户目录权限
@@ -713,8 +665,6 @@ else
     exit 1
 fi
 # 修改npm源
-# 在执行前确定有操作权限
-# npm get registry
 npm config set registry https://registry.npmmirror.com -g
 echo "===================npm已修改为国内源==================="
 # 升级npm
@@ -724,8 +674,6 @@ npm install -g npm
 echo "===================安装yarn==================="
 npm install -g yarn
 # 修改yarn源
-# 在执行前确定有操作权限
-# yarn config list
 yarn config set registry https://registry.npmmirror.com --global
 echo "===================yarn已修改为国内源==================="
 # 基础需求安装完毕。
@@ -743,48 +691,16 @@ export LC_ALL=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
 export LANG=en_US.UTF-8
 # 修改用户yarn源
-# 在执行前确定有操作权限
-# yarn config list
 yarn config set registry https://registry.npmmirror.com --global
 echo "===================用户yarn已修改为国内源==================="
 EOF
-# 重启redis-server和mariadb
-# echo "===================重启redis-server和mariadb==================="
-# # service redis-server restart
-# # service mariadb restart
-# # /etc/init.d/redis-server restart
-# redis-cli shutdown
-# redis-server /etc/redis/redis.conf
-# /etc/init.d/mariadb restart
-# # 等待2秒
-# for i in $(seq -w 2); do
-#     echo ${i}
-#     sleep 1
-# done
 # 适配docker
 echo "判断是否适配docker"
 if [[ ${inDocker} == "yes" ]]; then
-    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
-    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
+    # 如果是在docker中运行，使用supervisor管理nginx进程
+    echo "================为docker镜像添加nginx启动配置文件==================="
     supervisorConfigDir=/home/${userName}/.config/supervisor
     mkdir -p ${supervisorConfigDir}
-    f=${supervisorConfigDir}/mariadb.conf
-    rm -f ${f}
-    echo "[program:mariadb]" > ${f}
-    echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error" >> ${f}
-    # echo "user=mysql" >> ${f}
-    echo "priority=1" >> ${f}
-    echo "autostart=true" >> ${f}
-    echo "autorestart=true" >> ${f}
-    echo "numprocs=1" >> ${f}
-    echo "startretries=10" >> ${f}
-    # echo "exitcodes=0,2" >> ${f}
-    # echo "stopsignal=INT" >> ${f}
-    echo "stopwaitsecs=10" >> ${f}
-    echo "redirect_stderr=true" >> ${f}
-    echo "stdout_logfile_maxbytes=1024MB" >> ${f}
-    echo "stdout_logfile_backups=10" >> ${f}
-    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${f}
     f=${supervisorConfigDir}/nginx.conf
     rm -f ${f}
     echo "[program: nginx]" > ${f}
@@ -799,18 +715,7 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "startsecs=10" >> ${f}
     echo "startretries=5" >> ${f}
     echo "stopasgroup=true" >> ${f}
-    # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
-    echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
-    /etc/init.d/mariadb stop
-    # 等待2秒
-    for i in $(seq -w 2); do
-        echo ${i}
-        sleep 1
-    done
-    if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
-        echo "建立数据库配置文件软链接"
-        ln -fs ${supervisorConfigDir}/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
-    fi
+    
     i=$(ps aux | grep -c supervisor || true)
     if [[ ${i} -le 1 ]]; then
         echo "启动supervisor进程"
@@ -897,14 +802,20 @@ cd ~/${installDir}
 echo "===================获取应用==================="
 bench get-app ${erpnextBranch} ${erpnextPath}
 bench get-app payments
-# bench get-app ${erpnextBranch} hrms
 bench get-app print_designer
 EOF
-# 建立新网站
+# 建立新网站（使用你的外部数据库信息）
 su - ${userName} <<EOF
 cd ~/${installDir}
-echo "===================建立新网站==================="
-bench new-site --mariadb-root-password ${mariadbRootPassword} ${siteDbPassword} --admin-password ${adminPassword} ${siteName}
+echo "===================建立新网站（连接外部数据库）==================="
+bench new-site \
+    --db-host ${mariadbHost} \
+    --db-port ${mariadbPort} \
+    --mariadb-root-username root \
+    --mariadb-root-password ${mariadbRootPassword} \
+    ${siteDbPassword} \
+    --admin-password ${adminPassword} \
+    ${siteName}
 EOF
 # 安装erpnext应用到新网站
 su - ${userName} <<EOF
@@ -912,7 +823,6 @@ cd ~/${installDir}
 echo "===================安装erpnext应用到新网站==================="
 bench --site ${siteName} install-app payments
 bench --site ${siteName} install-app erpnext
-# bench --site ${siteName} install-app hrms
 bench --site ${siteName} install-app print_designer
 EOF
 # 站点配置
@@ -925,8 +835,7 @@ bench config http_timeout 6000
 bench config serve_default_site on
 bench use ${siteName}
 EOF
-# 安装中文本地化,只有框架，需要自行编辑zh.csv文件添加翻译词条。
-# 详情请见：https://gitee.com/phipsoft/zh_chinese_language
+# 安装中文本地化
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================安装中文本地化==================="
@@ -969,157 +878,4 @@ if [[ ${productionMode} == "yes" ]]; then
     fi
     # 如果有检测到的supervisor可用重启指令，修改bensh脚本supervisor重启指令为可用指令。
     echo "修正脚本代码..."
-    if [[ ${supervisorCommand} != "" ]]; then
-        echo "可用的supervisor重启指令为："${supervisorCommand}
-        # 确认bensh脚本使用supervisor指令代码行
-        f="/usr/local/lib/python3.10/dist-packages/bench/config/supervisor.py"
-        n=$(sed -n "/service.*supervisor.*reload\|service.*supervisor.*restart/=" ${f})
-        # 如找到替换为可用指令
-        if [ ${n} ]; then
-            echo "替换bensh脚本supervisor重启指令为："${supervisorCommand}
-            sed -i "${n} s/reload\|restart/${supervisorCommand}/g" ${f}
-        fi
-    fi
-    # 准备执行开启生产模式脚本
-    # 监控是否生成frappe配置文件，没有则重复执行。
-    # 开启初始化时如果之前supervisor没有安装或安装失败会再次尝试安装。但可能因为没有修改为正确的重启指令不能重启。
-    f="/etc/supervisor/conf.d/${installDir}.conf"
-    i=0
-    while [[ i -lt 9 ]]; do
-        echo "尝试开启生产模式${i}..."
-        set +e
-        su - ${userName} <<EOF
-        cd ~/${installDir}
-        sudo bench setup production ${userName} --yes
-EOF
-        set -e
-        i=$((${i} + 1))
-        echo "判断执行结果"
-        sleep 1
-        if [[ -e ${f} ]]; then
-            echo "配置文件已生成..."
-            break
-        elif [[ ${i} -ge 9 ]]; then
-            echo "失败次数过多${i}，请尝试手动开启！"
-            break
-        else
-            echo "配置文件生成失败${i}，自动重试。"
-        fi
-    done
-    # echo "重载supervisor配置"
-    # /usr/bin/supervisorctl reload 
-    # sleep 2
 fi
-# 如果有设定端口，修改为设定端口
-if [[ ${webPort} != "" ]]; then
-    echo "===================设置web端口为：${webPort}==================="
-    # 再次验证端口号的有效性
-    t=$(echo ${webPort}|sed 's/[0-9]//g')
-    if [[ (${t} == "") && (${webPort} -ge 80) && (${webPort} -lt 65535) ]]; then
-        if [[ ${productionMode} == "yes" ]]; then
-            f="/home/${userName}/${installDir}/config/nginx.conf"
-            if [[ -e ${f} ]]; then
-                echo "找到配置文件："${f}
-                n=($(sed -n "/^[[:space:]]*listen/=" ${f}))
-                # 如找到替换为可用指令
-                if [ ${n} ]; then
-                    sed -i "${n} c listen ${webPort};" ${f}
-                    sed -i "$((${n}+1)) c listen [::]:${webPort};" ${f}
-                    /etc/init.d/nginx reload
-                    echo "web端口号修改为："${webPort}
-                else
-                    echo "配置文件中没找到设置行。修改失败。"
-                    warnArr[${#warnArr[@]}]="找到配置文件："${f}",没找到设置行。修改失败。"
-                fi
-            else
-                echo "没有找到配置文件："${f}",端口修改失败。"
-                warnArr[${#warnArr[@]}]="没有找到配置文件："${f}",端口修改失败。"
-            fi
-        else
-            echo "开发模式修改端口号"
-            f="/home/${userName}/${installDir}/Procfile"
-            echo "找到配置文件："${f}
-            if [[ -e ${f} ]]; then
-                n=($(sed -n "/^web.*port.*/=" ${f}))
-                # 如找到替换为可用指令
-                if [[ ${n} ]]; then
-                    sed -i "${n} c web: bench serve --port ${webPort}" ${f}
-                    su - ${userName} bash -c "cd ~/${installDir}; bench restart"
-                    echo "web端口号修改为："${webPort}
-                else
-                    echo "配置文件中没找到设置行。修改失败。"
-                    warnArr[${#warnArr[@]}]="找到配置文件："${f}",没找到设置行。修改失败。"
-                fi
-            else
-                echo "没有找到配置文件："${f}",端口修改失败。"
-                warnArr[${#warnArr[@]}]="没有找到配置文件："${f}",端口修改失败。"
-            fi
-        fi
-    else
-        echo "设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
-        warnArr[${#warnArr[@]}]="设置的端口号无效或不符合要求，取消端口号修改。使用默认端口号。"
-    fi
-else
-    # 没有设定端口号，显示默认端口号。
-    if [[ ${productionMode} == "yes" ]]; then
-        webPort="80"
-    else
-        webPort="8000"
-    fi
-fi
-# 修正权限
-echo "===================修正权限==================="
-chown -R ${userName}:${userName} /home/${userName}/
-chmod 755 /home/${userName}
-# 清理垃圾,ERPNext安装完毕
-echo "===================清理垃圾,ERPNext安装完毕==================="
-apt clean
-apt autoremove -y
-rm -rf /var/lib/apt/lists/*
-pip cache purge
-npm cache clean --force
-yarn cache clean
-su - ${userName} <<EOF
-cd ~/${installDir}
-npm cache clean --force
-yarn cache clean
-EOF
-# 确认安装
-su - ${userName} <<EOF
-cd ~/${installDir}
-echo "===================确认安装==================="
-bench version
-EOF
-echo "===================主要运行环境==================="
-for i in "${rteArr[@]}"
-do
-    echo ${i}
-done
-if [[ ${#warnArr[@]} != 0 ]]; then
-    echo "===================警告==================="
-    for i in "${warnArr[@]}"
-    do
-        echo ${i}
-    done
-fi
-echo "管理员账号：administrator，密码：${adminPassword}。"
-if [[ ${productionMode} == "yes" ]]; then
-    if [[ -e /etc/supervisor/conf.d/${installDir}.conf ]]; then
-        echo "已开启生产模式。使用ip或域名访问网站。监听${webPort}端口。"
-    else
-        echo "已配置开启生产模式。但supervisor配置文件生成失败，请排除错误后手动开启。"
-    fi
-else
-    echo "使用su - ${userName}转到${userName}用户进入~/${installDir}目录"
-    echo "运行bench start启动项目，使用ip或域名访问网站。监听${webPort}端口。"
-fi
-if [[ ${inDocker} == "yes" ]]; then
-    echo "当前supervisor状态"
-    /usr/bin/supervisorctl status
-    # echo "停止所有进程。"
-    # /usr/bin/supervisorctl stop all
-fi
-exit 0
-p all
-fi
-exit 0
