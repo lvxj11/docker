@@ -34,9 +34,10 @@ fi
 # 静默模式会默认删除已存在的安装目录和当前设置站点重名的数据库及用户。请谨慎使用。
 # branch参数会同时修改frappe和erpnext的分支。
 # 也可以直接修改下列变量
-mariadbPath=""
+# 修改数据库连接参数为外部数据库
+mariadbPath="mysql"  # 外部数据库容器名
 mariadbPort="3306"
-mariadbRootPassword="Pass1234"
+mariadbRootPassword="jiangbn6"  # 外部数据库密码
 adminPassword="admin"
 installDir="frappe-bench"
 userName="frappe"
@@ -223,11 +224,11 @@ if [[ ${quiet} != "yes" ]];then
     echo "4. 在Docker镜像里安装并开启静默模式"
     echo "*. 取消安装"
     echo -e "说明：开启静默模式后，如果有重名目录或数据库包括supervisor进程配置文件都将会删除后继续安装，请注意数据备份！ \n \
-        开发模式需要手动启动“bench start”，启动后访问8000端口。\n \
+        开发模式需要手动启动"bench start"，启动后访问8000端口。\n \
         生产模式无需手动启动，使用nginx反代并监听80端口\n \
         此外生产模式会使用supervisor管理进程增强可靠性，并预编译代码开启redis缓存，提高应用性能。\n \
         在Docker镜像里安装会适配其进程启动方式将mariadb及nginx进程也交给supervisor管理。 \n \
-        docker镜像主线程：“sudo supervisord -n -c /etc/supervisor/supervisord.conf”。请自行配置到镜像"
+        docker镜像主线程："sudo supervisord -n -c /etc/supervisor/supervisord.conf"。请自行配置到镜像"
     read -r -p "请选择： " input
     case ${input} in
         1)
@@ -308,9 +309,9 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     python3-testresources \
     git \
     software-properties-common \
-    mariadb-server \
-    mariadb-client \
-    libmysqlclient-dev \
+    # mariadb-server \  # 注释掉，不安装内部MariaDB
+    # mariadb-client \  # 注释掉，不安装内部MariaDB
+    libmysqlclient-dev \  # 保留，ERPNext需要MySQL客户端库
     xvfb \
     libfontconfig \
     wkhtmltopdf \
@@ -394,68 +395,78 @@ else
     echo "==========wkhtmltox安装失败退出脚本！=========="
     exit 1
 fi
-# 环境需求检查,MariaDB
-# https://mirrors.aliyun.com/mariadb/mariadb-10.6.8/bintar-linux-systemd-x86_64/mariadb-10.6.8-linux-systemd-x86_64.tar.gz
-if type mysql >/dev/null 2>&1; then
-    result=$(mysql -V | grep "10.6" || true)
+
+# 环境需求检查,MariaDB - 修改为检查外部数据库连接
+echo "===================检查外部数据库连接==================="
+if mysql -h mysql -P 3306 -u root -pjiangbn6 -e "SELECT 1" >/dev/null 2>&1; then
+    echo '==========外部MariaDB连接成功=========='
+    result=$(mysql -h mysql -P 3306 -u root -pjiangbn6 -e "SELECT VERSION();" | grep "10.6" || true)
     if [[ "${result}" == "" ]]
     then
-        echo '==========已安装MariaDB，但不是推荐的10.6版本。=========='
-        warnArr[${#warnArr[@]}]='MariaDB不是推荐的10.6版本。'
+        echo '==========外部MariaDB不是10.6版本。=========='
+        warnArr[${#warnArr[@]}]='外部MariaDB不是推荐的10.6版本。'
     else
-        echo '==========已安装MariaDB10.6=========='
+        echo '==========外部MariaDB版本检查通过=========='
     fi
-    rteArr[${#rteArr[@]}]=$(mysql -V)
+    rteArr[${#rteArr[@]}]="MariaDB $(mysql -h mysql -P 3306 -u root -pjiangbn6 -e "SELECT VERSION();" | tail -1)"
 else
-    echo "==========MariaDB安装失败退出脚本！=========="
+    echo "==========无法连接到外部MariaDB数据库！=========="
+    echo "请确保容器 'mysql' 在 'eprnext' 网络中运行，并且端口3306可访问"
     exit 1
 fi
-# 修改数据库配置文件
-# 如果之前修改过则跳过
-n=$(cat /etc/mysql/my.cnf | grep -c "# ERPNext install script added" || true)
-if [[ ${n} == 0 ]]; then
-    echo "===================修改数据库配置文件==================="
-    echo "# ERPNext install script added" >> /etc/mysql/my.cnf
-    echo "[mysqld]" >> /etc/mysql/my.cnf
-    echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
-    echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
-    echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
-    echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
-    echo "" >> /etc/mysql/my.cnf
-    echo "[mysql]" >> /etc/mysql/my.cnf
-    echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
-fi
-/etc/init.d/mariadb restart
-# 等待2秒
-for i in $(seq -w 2); do
-    echo ${i}
-    sleep 1
-done
-# 授权远程访问并修改密码
-if mysql -uroot -e quit >/dev/null 2>&1
-then
-    echo "===================修改数据库root本地访问密码==================="
-    mysqladmin -v -uroot password ${mariadbRootPassword}
-elif mysql -uroot -p${mariadbRootPassword} -e quit >/dev/null 2>&1
-then
-    echo "===================数据库root本地访问密码已配置==================="
-else
-    echo "===================数据库root本地访问密码错误==================="
-    exit 1
-fi
-echo "===================修改数据库root远程访问密码==================="
-mysql -u root -p${mariadbRootPassword} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}' WITH GRANT OPTION;"
-echo "===================刷新权限表==================="
-mysqladmin -v -uroot -p${mariadbRootPassword} reload
-sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
-echo "===================数据库配置完成==================="
+echo "===================数据库连接测试完成==================="
+
+# 注释掉以下数据库配置文件修改部分，使用外部数据库
+# # 修改数据库配置文件
+# # 如果之前修改过则跳过
+# n=$(cat /etc/mysql/my.cnf | grep -c "# ERPNext install script added" || true)
+# if [[ ${n} == 0 ]]; then
+#     echo "===================修改数据库配置文件==================="
+#     echo "# ERPNext install script added" >> /etc/mysql/my.cnf
+#     echo "[mysqld]" >> /etc/mysql/my.cnf
+#     echo "character-set-client-handshake=FALSE" >> /etc/mysql/my.cnf
+#     echo "character-set-server=utf8mb4" >> /etc/mysql/my.cnf
+#     echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/my.cnf
+#     echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf
+#     echo "" >> /etc/mysql/my.cnf
+#     echo "[mysql]" >> /etc/mysql/my.cnf
+#     echo "default-character-set=utf8mb4" >> /etc/mysql/my.cnf
+# fi
+# /etc/init.d/mariadb restart
+# # 等待2秒
+# for i in $(seq -w 2); do
+#     echo ${i}
+#     sleep 1
+# done
+
+# 注释掉以下数据库密码设置部分，使用外部数据库
+# # 授权远程访问并修改密码
+# if mysql -uroot -e quit >/dev/null 2>&1
+# then
+#     echo "===================修改数据库root本地访问密码==================="
+#     mysqladmin -v -uroot password ${mariadbRootPassword}
+# elif mysql -uroot -p${mariadbRootPassword} -e quit >/dev/null 2>&1
+# then
+#     echo "===================数据库root本地访问密码已配置==================="
+# else
+#     echo "===================数据库root本地访问密码错误==================="
+#     exit 1
+# fi
+# echo "===================修改数据库root远程访问密码==================="
+# mysql -u root -p${mariadbRootPassword} -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}' WITH GRANT OPTION;"
+# echo "===================刷新权限表==================="
+# mysqladmin -v -uroot -p${mariadbRootPassword} reload
+# sed -i 's/^password.*$/password='"${mariadbRootPassword}"'/' /etc/mysql/debian.cnf
+# echo "===================数据库配置完成==================="
+
 # 检查数据库是否有同名用户。如有，选择处理方式。
 echo "==========检查数据库残留=========="
 while true
 do
     siteSha1=$(echo -n ${siteName} | sha1sum)
     siteSha1=_${siteSha1:0:16}
-    dbUser=$(mysql -u root -p${mariadbRootPassword} -e "use mysql;SELECT User,Host FROM user;" | grep ${siteSha1} || true)
+    # 修改为使用外部数据库连接
+    dbUser=$(mysql -h mysql -P 3306 -u root -pjiangbn6 -e "use mysql;SELECT User,Host FROM user;" | grep ${siteSha1} || true)
     if [[ ${dbUser} != "" ]]; then
         if [[ ${quiet} != "yes" && ${inDocker} != "yes" ]]; then
             clear
@@ -469,13 +480,13 @@ do
         echo '*. 取消安装。'
         if [[ ${quiet} == "yes" ]]; then
             echo '当前为静默模式，将自动按第2项执行。'
-            # 删除重名数据库
-            mysql -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
+            # 删除重名数据库 - 修改为使用外部数据库连接
+            mysql -h mysql -P 3306 -u root -pjiangbn6 -e "drop database ${siteSha1};"
             arrUser=(${dbUser})
             # 如果重名用户有多个host，以步进2取用户名和用户host并删除。
             for ((i=0; i<${#arrUser[@]}; i=i+2))
             do
-                mysql -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
+                mysql -h mysql -P 3306 -u root -pjiangbn6 -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
             done
             echo "已删除数据库及用户，继续安装！"
             continue
@@ -498,11 +509,12 @@ do
                 continue
                 ;;
             '2')
-                mysql -u root -p${mariadbRootPassword} -e "drop database ${siteSha1};"
+                # 修改为使用外部数据库连接
+                mysql -h mysql -P 3306 -u root -pjiangbn6 -e "drop database ${siteSha1};"
                 arrUser=(${dbUser})
                 for ((i=0; i<${#arrUser[@]}; i=i+2))
                 do
-                    mysql -u root -p${mariadbRootPassword} -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
+                    mysql -h mysql -P 3306 -u root -pjiangbn6 -e "drop user ${arrUser[$i]}@${arrUser[$i+1]};"
                 done
                 echo "已删除数据库及用户，继续安装！"
                 continue
@@ -748,43 +760,49 @@ export LANG=en_US.UTF-8
 yarn config set registry https://registry.npmmirror.com --global
 echo "===================用户yarn已修改为国内源==================="
 EOF
-# 重启redis-server和mariadb
-# echo "===================重启redis-server和mariadb==================="
-# # service redis-server restart
-# # service mariadb restart
-# # /etc/init.d/redis-server restart
-# redis-cli shutdown
-# redis-server /etc/redis/redis.conf
-# /etc/init.d/mariadb restart
-# # 等待2秒
-# for i in $(seq -w 2); do
-#     echo ${i}
-#     sleep 1
-# done
+
+# 注释掉重启数据库部分，使用外部数据库
+# # 重启redis-server和mariadb
+# # echo "===================重启redis-server和mariadb==================="
+# # # service redis-server restart
+# # # service mariadb restart
+# # # /etc/init.d/redis-server restart
+# # redis-cli shutdown
+# # redis-server /etc/redis/redis.conf
+# # /etc/init.d/mariadb restart
+# # # 等待2秒
+# # for i in $(seq -w 2); do
+# #     echo ${i}
+# #     sleep 1
+# # done
+
 # 适配docker
 echo "判断是否适配docker"
 if [[ ${inDocker} == "yes" ]]; then
-    # 如果是在docker中运行，使用supervisor管理mariadb和nginx进程
-    echo "================为docker镜像添加mariadb和nginx启动配置文件==================="
+    # 如果是在docker中运行，使用supervisor管理nginx进程（不再管理mariadb，因为使用外部数据库）
+    echo "================为docker镜像添加nginx启动配置文件==================="
     supervisorConfigDir=/home/${userName}/.config/supervisor
     mkdir -p ${supervisorConfigDir}
-    f=${supervisorConfigDir}/mariadb.conf
-    rm -f ${f}
-    echo "[program:mariadb]" > ${f}
-    echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error" >> ${f}
-    # echo "user=mysql" >> ${f}
-    echo "priority=1" >> ${f}
-    echo "autostart=true" >> ${f}
-    echo "autorestart=true" >> ${f}
-    echo "numprocs=1" >> ${f}
-    echo "startretries=10" >> ${f}
-    # echo "exitcodes=0,2" >> ${f}
-    # echo "stopsignal=INT" >> ${f}
-    echo "stopwaitsecs=10" >> ${f}
-    echo "redirect_stderr=true" >> ${f}
-    echo "stdout_logfile_maxbytes=1024MB" >> ${f}
-    echo "stdout_logfile_backups=10" >> ${f}
-    echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${f}
+    
+    # 注释掉mariadb supervisor配置，使用外部数据库
+    # f=${supervisorConfigDir}/mariadb.conf
+    # rm -f ${f}
+    # echo "[program:mariadb]" > ${f}
+    # echo "command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error" >> ${f}
+    # # echo "user=mysql" >> ${f}
+    # echo "priority=1" >> ${f}
+    # echo "autostart=true" >> ${f}
+    # echo "autorestart=true" >> ${f}
+    # echo "numprocs=1" >> ${f}
+    # echo "startretries=10" >> ${f}
+    # # echo "exitcodes=0,2" >> ${f}
+    # # echo "stopsignal=INT" >> ${f}
+    # echo "stopwaitsecs=10" >> ${f}
+    # echo "redirect_stderr=true" >> ${f}
+    # echo "stdout_logfile_maxbytes=1024MB" >> ${f}
+    # echo "stdout_logfile_backups=10" >> ${f}
+    # echo "stdout_logfile=/var/run/log/supervisor_mysql.log" >> ${f}
+    
     f=${supervisorConfigDir}/nginx.conf
     rm -f ${f}
     echo "[program: nginx]" > ${f}
@@ -799,18 +817,22 @@ if [[ ${inDocker} == "yes" ]]; then
     echo "startsecs=10" >> ${f}
     echo "startretries=5" >> ${f}
     echo "stopasgroup=true" >> ${f}
-    # 关闭mariadb进程，启动supervisor进程并管理mariadb进程
-    echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
-    /etc/init.d/mariadb stop
-    # 等待2秒
-    for i in $(seq -w 2); do
-        echo ${i}
-        sleep 1
-    done
-    if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
-        echo "建立数据库配置文件软链接"
-        ln -fs ${supervisorConfigDir}/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
-    fi
+    
+    # 修改：不再关闭mariadb进程，因为使用外部数据库
+    # echo "关闭mariadb进程，启动supervisor进程并管理mariadb进程"
+    # /etc/init.d/mariadb stop
+    # # 等待2秒
+    # for i in $(seq -w 2); do
+    #     echo ${i}
+    #     sleep 1
+    # done
+    # if [[ ! -e /etc/supervisor/conf.d/mysql.conf ]]; then
+    #     echo "建立数据库配置文件软链接"
+    #     ln -fs ${supervisorConfigDir}/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
+    # fi
+    
+    # 启动supervisor进程（只管理nginx，不管理mariadb）
+    echo "启动supervisor进程（使用外部数据库，只管理nginx）"
     i=$(ps aux | grep -c supervisor || true)
     if [[ ${i} -le 1 ]]; then
         echo "启动supervisor进程"
@@ -900,11 +922,12 @@ bench get-app payments
 # bench get-app ${erpnextBranch} hrms
 bench get-app print_designer
 EOF
-# 建立新网站
+# 建立新网站 - 修改为使用外部数据库连接参数
 su - ${userName} <<EOF
 cd ~/${installDir}
 echo "===================建立新网站==================="
-bench new-site --mariadb-root-password ${mariadbRootPassword} ${siteDbPassword} --admin-password ${adminPassword} ${siteName}
+# 使用外部数据库参数
+bench new-site --db-host mysql --db-port 3306 --mariadb-root-username root --mariadb-root-password jiangbn6 ${siteDbPassword} --admin-password ${adminPassword} ${siteName}
 EOF
 # 安装erpnext应用到新网站
 su - ${userName} <<EOF
@@ -1118,8 +1141,5 @@ if [[ ${inDocker} == "yes" ]]; then
     /usr/bin/supervisorctl status
     # echo "停止所有进程。"
     # /usr/bin/supervisorctl stop all
-fi
-exit 0
-p all
 fi
 exit 0
