@@ -216,7 +216,7 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && bench start > bench-start.log 2>&1 & \
     && sleep 10 \
     && bench --site site1.local install-app erpnext \
-    # 容器中运行fail2ban需要特权模式，这里注释掉代码开启生产模式时将不再安装fail2ban。防火墙需要宿主机自行维护。
+    # 容器中运行fail2ban需要特权模式，这里注释掉代码开启生产模式时将不再安装fail2ban。防火墙需要宿主机自行维护。 \
     && n=$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" "/home/frappe/.bench/bench/config/production_setup.py") \
     && sudo sed -i "${n} s/^/#&/" "/home/frappe/.bench/bench/config/production_setup.py" \
     && let n++ \
