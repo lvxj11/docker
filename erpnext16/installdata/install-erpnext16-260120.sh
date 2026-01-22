@@ -7,12 +7,6 @@
 # 会默认删除已存在的安装目录和当前设置站点重名的数据库及用户。请谨慎使用。
 # branch参数会同时修改frappe和erpnext的分支。
 set -e
-if [ -e "~/.profile" ];then
-    source ~/.profile
-fi
-if [ -e "~/.bashrc" ];then
-    source ~/.bashrc
-fi
 mariadbPath=""
 mariadbPort="3306"
 mariadbRootPassword="Pass1234"
@@ -136,12 +130,20 @@ check_supervisor() {
 # 检查并配置MariaDB
 check_and_config_mariadb() {
     # 修改数据库配置文件
-    if [ ! -e "/etc/mysql/mariadb.conf.d/99-erpnext.cnf" ]; then
-        print_info "修改数据库配置文件..."
+    # 如果之前修改过则跳过
+    # 首先检查主配置文件是否存在，然后检查是否已修改
+    if [ -f /etc/mysql/my.cnf ]; then
+        n=$(grep -c "# ERPNext install script added" /etc/mysql/my.cnf || true)
+    else
+        # 如果没有主配置文件，检查mariadb.conf.d目录中的配置
+        n=$(grep -r "# ERPNext install script added" /etc/mysql/mariadb.conf.d/ 2>/dev/null | wc -l || true)
+    fi
+    if [ ${n} == 0 ]; then
+        print_info "===================修改数据库配置文件==================="
         # 确保配置目录存在
         sudo mkdir -p /etc/mysql/mariadb.conf.d/
         # 创建或修改ERPNext配置文件
-        sudo tee /etc/mysql/mariadb.conf.d/99-erpnext.cnf > /dev/null << 'EOF'
+        sudo tee /etc/mysql/mariadb.conf.d/99-erpnext.cnf << 'EOF'
 # ERPNext install script added
 [mysqld]
 character-set-client-handshake=FALSE
@@ -156,19 +158,10 @@ innodb_large_prefix=ON
 default-character-set=utf8mb4
 EOF
         print_info "MariaDB配置文件已创建: /etc/mysql/mariadb.conf.d/99-erpnext.cnf"
-    else
-        print_warn "MariaDB配置文件已存在: /etc/mysql/mariadb.conf.d/99-erpnext.cnf"
     fi
-    local pidId="$(pidof mariadbd)"
-    # 如果存在，则停止
-    if [ -n "${pidId}" ]; then
-        print_info "停止MariaDB服务..."
-        sudo kill -TERM ${pidId}
-        wait_for 2
-    fi
-    sudo /usr/bin/mariadbd-safe &
-    print_info "启动MariaDB服务..."
-    wait_for 3
+    sudo /etc/init.d/mariadb restart
+    # 等待2秒
+    wait_for 2
     # 本地 root 无密码可登录
     if sudo mariadb -uroot -e "SELECT 1" >/dev/null 2>&1; then
         print_info "===== 设置 MariaDB root 密码 ====="
@@ -178,23 +171,25 @@ FLUSH PRIVILEGES;
 SQL
     # 已有密码
     elif sudo mariadb -uroot -p"${mariadbRootPassword}" -e "SELECT 1" >/dev/null 2>&1; then
-        print_info "root 密码已存在..."
+        print_info "===== root 密码已存在 ====="
     else
-        print_error "root 密码验证失败..."
+        print_error "===== root 密码验证失败 ====="
         exit 1
     fi
-    print_info "配置 root 远程访问..."
+    print_info "===== 配置 root 远程访问 ====="
     sudo mariadb -uroot -p"${mariadbRootPassword}" << SQL
 CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}';
 ALTER USER 'root'@'%' IDENTIFIED BY '${mariadbRootPassword}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+DELETE FROM mysql.user WHERE User='';
+FLUSH PRIVILEGES;
 SQL
-    print_info "数据库配置完成"
+    print_info "===================数据库配置完成==================="
 }
 
 # 检查数据库是否有同名用户。如有，选择处理方式。
 check_database() {
-    print_info "检查数据库残留..."
+    print_info "==========检查数据库残留=========="
     while true; do
         siteSha1=$(echo -n ${siteName} | sha1sum)
         siteSha1=_${siteSha1:0:16}
@@ -216,7 +211,7 @@ check_database() {
         fi
     done
     if [ -d "/home/${userName}/${installDir}" ]; then
-        print_warn "存在同名目录，删除..."
+        print_warn "==========存在同名目录，已删除！=========="
         rm -rf /home/${userName}/${installDir}
     fi
 }
@@ -226,14 +221,14 @@ check_redis() {
         result=$(redis-server -v | grep "7" || true)
         if [ "${result}" == "" ]
         then
-            print_warn '已安装redis，但不是推荐的7版本...'
+            print_warn '==========已安装redis，但不是推荐的7版本。=========='
             warnArr[${#warnArr[@]}]='redis不是推荐的7版本。'
         else
-            print_info '已安装redis7...'
+            print_info '==========已安装redis7=========='
             sudo /etc/init.d/redis-server stop
         fi
     else
-        print_error "redis安装失败退出脚本！"
+        print_error "==========redis安装失败退出脚本！=========="
         exit 1
     fi
 }
@@ -243,18 +238,18 @@ check_wkhtmltox() {
         result=$(wkhtmltopdf -V | grep "0.12.6" || true)
         if [ "${result}" == "" ]
         then
-            print_warn '已存在wkhtmltox，但不是推荐的0.12.6版本'
+            print_warn '==========已存在wkhtmltox，但不是推荐的0.12.6版本。=========='
             warnArr[${#warnArr[@]}]='wkhtmltox不是推荐的0.12.6版本。'
         else
-            print_info '已安装wkhtmltox_0.12.6'
+            print_info '==========已安装wkhtmltox_0.12.6=========='
         fi
     else
         # 搜索软件源是否有wkhtmltopdf 0.12.6版本
         if [ $(apt list "wkhtmltopdf*" | grep "0.12.6" | grep "amd64" | wc -l 2>/dev/null) -gt 0 ]; then
-            print_info "从软件源安装wkhtmltox_0.12.6..."
+            print_info "==========从软件源安装wkhtmltox_0.12.6=========="
             sudo DEBIAN_FRONTEND=noninteractive apt install -y wkhtmltopdf
         else
-            print_info "下载并安装wkhtmltopdf_0.12.6..."
+            print_info "==========下载并安装wkhtmltopdf_0.12.6=========="
             wget "https://gh-proxy.org/https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb" -O wkhtmltopdf.deb
             dpkg -i wkhtmltopdf.deb
         fi
@@ -266,41 +261,41 @@ check_nodejs() {
     if type node >/dev/null 2>&1; then
         result=$(node -v | grep "v24." || true)
         if [ "${result}" == "" ]; then
-            print_warn '已存在node，但不是v24版。这将有可能导致一些问题。建议卸载node后重试...'
+            print_warn '==========已存在node，但不是v24版。这将有可能导致一些问题。建议卸载node后重试。=========='
             warnArr[${#warnArr[@]}]='node不是推荐的v24版本。'
         else
-            print_info '已安装node24'
+            print_info '==========已安装node24=========='
         fi
     else
-        print_error "node安装失败退出脚本！"
+        print_error "==========node安装失败退出脚本！=========="
         exit 1
     fi
     # 修改npm源
     # 在执行前确定有操作权限
     # npm get registry
     npm config set registry https://registry.npmmirror.com -g
-    print_info "npm已修改为国内源..."
+    print_info "===================npm已修改为国内源==================="
     # 升级npm
-    print_info "升级npm..."
+    print_info "===================升级npm==================="
     npm install -g npm
     # 安装yarn
-    print_info "安装yarn..."
+    print_info "===================安装yarn==================="
     npm install -g yarn
     # 修改yarn源
     # 在执行前确定有操作权限
     # yarn config list
     yarn config set registry https://registry.npmmirror.com --global
-    print_info "yarn已修改为国内源..."
+    print_info "===================yarn已修改为国内源==================="
 }
 # 配置supervisor
 configure_supervisor() {
     # 使用supervisor管理mariadb和nginx进程
-    print_info "为docker镜像添加mariadb和nginx启动配置文件..."
+    print_info "================为docker镜像添加mariadb和nginx启动配置文件==================="
     supervisorConfigDir=/root/.config/supervisor
     sudo mkdir -p ${supervisorConfigDir}
     local f=${supervisorConfigDir}/mariadb.conf
     sudo rm -f ${f}
-    sudo tee ${f} > /dev/null << 'EOF'
+    sudo tee ${f} << 'EOF'
 [program:mariadb]
 command=/usr/sbin/mariadbd --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error
 priority=1
@@ -322,7 +317,7 @@ EOF
     fi
     f=${supervisorConfigDir}/nginx.conf
     sudo rm -f ${f}
-    sudo tee ${f} > /dev/null << 'EOF'
+    sudo tee ${f} << 'EOF'
 [program:nginx]
 command=/usr/sbin/nginx -g 'daemon off;'
 autorestart=true
@@ -342,7 +337,7 @@ modify_pip_source() {
     # 修改pip默认源加速国内安装
     sudo mkdir -p /root/.pip
     local f="/root/.pip/pip.conf"
-    sudo tee ${f} > /dev/null << 'EOF'
+    sudo tee ${f} << 'EOF'
 [global]
 index-url=https://pypi.tuna.tsinghua.edu.cn/simple
 [install]
@@ -449,7 +444,7 @@ enable_production_mode() {
 # 修正supervisor配置
 modify_supervisor_config() { 
     print_info "修正supervisor配置"
-    sudo tee /etc/supervisor/conf.d/bench_fix.conf > /dev/null << 'EOF'
+    sudo tee /etc/supervisor/conf.d/bench_fix.conf << 'EOF'
 [program:frappe-bench-frappe-schedule]
 environment=
     PYTHONPATH="/home/frappe/.bench:/home/frappe/.pyenv/versions/3.14.2/lib/python3.14/site-packages:/home/frappe/frappe-bench/env/lib/python3.14/site-packages:$PYTHONPATH",
