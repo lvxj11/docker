@@ -99,16 +99,13 @@ USER frappe
 WORKDIR /home/frappe
 
 # Install Python via pyenv
-# ENV PYTHON_VERSION_V14=3.10.13
 ENV PYTHON_VERSION=3.14.2
 ENV PYENV_ROOT=/home/frappe/.pyenv
 ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 # From https://github.com/pyenv/pyenv#basic-github-checkout
 RUN git clone --depth 1 https://github.com/pyenv/pyenv.git .pyenv \
-    # && pyenv install $PYTHON_VERSION_V14 \
     && pyenv install $PYTHON_VERSION \
-    # && PYENV_VERSION=$PYTHON_VERSION_V14 pip install --no-cache-dir virtualenv \
     && PYENV_VERSION=$PYTHON_VERSION pip install --no-cache-dir virtualenv \
     && pyenv global $PYTHON_VERSION $PYTHON_VERSION_v14 \
     && sed -Ei -e '/^([^#]|$)/ {a export PYENV_ROOT="/home/frappe/.pyenv" a export PATH="$PYENV_ROOT/bin:$PATH" a ' -e ':a' -e '$!{n;ba};}' ~/.profile \
@@ -126,16 +123,12 @@ RUN git clone ${GIT_REPO} --depth 1 -b ${GIT_BRANCH} .bench \
     && echo "export BENCH_DEVELOPER=1" >>/home/frappe/.bashrc
 
 # Install Node via nvm
-# ENV NODE_VERSION_14=16.20.2
-ENV NODE_VERSION=24.12.0
+ENV NODE_VERSION=24.13.0
 ENV NVM_DIR=/home/frappe/.nvm
 ENV PATH=${NVM_DIR}/versions/node/v${NODE_VERSION}/bin/:${PATH}
 
 RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash \
     && . ${NVM_DIR}/nvm.sh \
-    # && nvm install ${NODE_VERSION_14} \
-    # && nvm use v${NODE_VERSION_14} \
-    && npm install -g yarn \
     && nvm install ${NODE_VERSION} \
     && nvm use v${NODE_VERSION} \
     && npm install -g yarn \
@@ -167,8 +160,6 @@ RUN apt-get update \
     && echo "collation-server=utf8mb4_unicode_ci" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
     && echo "bind-address=0.0.0.0" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
     && echo "innodb_file_per_table=1" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
-    && echo "innodb_file_format=Barracuda" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
-    && echo "innodb_large_prefix=ON" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
     && echo "" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
     && echo "[mysql]" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
     && echo "default-character-set=utf8mb4" >> /etc/mysql/mariadb.conf.d/99-erpnext.cnf \
@@ -198,23 +189,7 @@ RUN apt-get update \
     && echo "stopsignal=INT" >> /etc/supervisor/conf.d/nginx.conf \
     && echo "startsecs=10" >> /etc/supervisor/conf.d/nginx.conf \
     && echo "startretries=5" >> /etc/supervisor/conf.d/nginx.conf \
-    && echo "stopasgroup=true" >> /etc/supervisor/conf.d/nginx.conf \
-    # 生成supervisor管理frappe配置文件修正补丁,开启生产模式时链接到配置目录。
-    && mkdir -p /etc/supervisor/custom \
-    && echo "[program:frappe-bench-frappe-schedule]" > /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "environment=" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PYTHONPATH=/home/frappe/.bench:/home/frappe/.pyenv/versions/3.14.2/lib/python3.14/site-packages:/home/frappe/frappe-bench/env/lib/python3.14/site-packages," >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "[program:frappe-bench-frappe-short-worker]" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "environment=" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PYTHONPATH=/home/frappe/.bench:/home/frappe/.pyenv/versions/3.14.2/lib/python3.14/site-packages:/home/frappe/frappe-bench/env/lib/python3.14/site-packages," >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "[program:frappe-bench-frappe-long-worker]" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "environment=" >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PYTHONPATH=/home/frappe/.bench:/home/frappe/.pyenv/versions/3.14.2/lib/python3.14/site-packages:/home/frappe/frappe-bench/env/lib/python3.14/site-packages," >> /etc/supervisor/custom/frappe_fix.conf  \
-    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" >> /etc/supervisor/custom/frappe_fix.conf 
+    && echo "stopasgroup=true" >> /etc/supervisor/conf.d/nginx.conf
 
 USER frappe
 WORKDIR /home/frappe
@@ -230,7 +205,8 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && sudo mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Pass1234';" \
     && bench init --frappe-branch version-16 --ignore-exist frappe-bench \
     && cd /home/frappe/frappe-bench \
-    && bench get-app --branch version-16 "https://github.com/frappe/erpnext" \
+    && bench get-app --branch version-16 erpnext \
+    && bench get-app --branch version-16 hrms \
     && bench new-site --mariadb-root-username "root" --mariadb-root-password Pass1234 --db-password Pass1234 --admin-password admin site1.local \
     && bench config http_timeout 6000 \
     && bench config serve_default_site on \
@@ -238,17 +214,37 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && (bench start > bench-start.log 2>&1 &) \
     && sleep 10 \
     && bench --site site1.local install-app erpnext \
+    && bench --site site1.local install-app hrms \
     # 容器中运行fail2ban需要特权模式，这里注释掉检测及安装fail2ban的代码，否则将由于权限不足而安装失败。防火墙需要宿主机自行维护。 \
     && n=$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" "/home/frappe/.bench/bench/config/production_setup.py") \
     && sudo sed -i "${n} s/^/#&/" "/home/frappe/.bench/bench/config/production_setup.py" \
     && n=$((n + 1)) \
     && sudo sed -i "${n} s/^/#&/" "/home/frappe/.bench/bench/config/production_setup.py" \
-    # 将修正补丁链接到配置目录
-    && sudo ln -s /etc/supervisor/custom/frappe_fix.conf /etc/supervisor/conf.d/frappe_fix.conf \
+    # 尝试开启生产模式，重试多次直到生成配置文件
     && i=0 \
     && until [ -f /etc/supervisor/conf.d/frappe-bench.conf ] || [ $i -ge 9 ]; do \
         sudo -E env PATH="$PATH" bench setup production frappe --yes; i=$((i+1)); done; \
         [ -f /etc/supervisor/conf.d/frappe-bench.conf ] || (echo "生产模式配置失败" && exit 1) \
+    # 生成配置文件修正补丁
+    # 适配python版本及虚拟环境
+    && PYTHON_SITE=$(python3 -c "import site; print(':'.join(site.getsitepackages()))") \
+    && PYTHONPATH=/home/frappe/.bench:${PYTHON_SITE} \
+    && PYTHON_SITE=$(/home/frappe/frappe-bench/env/bin/python -c "import site; print(':'.join(site.getsitepackages()))") \
+    && PYTHONPATH=${PYTHONPATH}:${PYTHON_SITE} \
+    && echo "[program:frappe-bench-frappe-schedule]" | sudo tee /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "environment=" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PYTHONPATH=${PYTHONPATH}," | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "[program:frappe-bench-frappe-short-worker]" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "environment=" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PYTHONPATH=${PYTHONPATH}," | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "[program:frappe-bench-frappe-long-worker]" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "environment=" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PYTHONPATH=${PYTHONPATH}," | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
     && pip cache purge \
     && npm cache clean --force \
     && yarn cache clean \
