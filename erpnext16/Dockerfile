@@ -107,7 +107,7 @@ ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 RUN git clone --depth 1 https://github.com/pyenv/pyenv.git .pyenv \
     && pyenv install $PYTHON_VERSION \
     && PYENV_VERSION=$PYTHON_VERSION pip install --no-cache-dir virtualenv \
-    && pyenv global $PYTHON_VERSION $PYTHON_VERSION_v14 \
+    && pyenv global $PYTHON_VERSION \
     && sed -Ei -e '/^([^#]|$)/ {a export PYENV_ROOT="/home/frappe/.pyenv" a export PATH="$PYENV_ROOT/bin:$PATH" a ' -e ':a' -e '$!{n;ba};}' ~/.profile \
     && echo 'eval "$(pyenv init --path)"' >>~/.profile \
     && echo 'eval "$(pyenv init -)"' >>~/.bashrc
@@ -245,11 +245,11 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && echo "environment=" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
     && echo "    PYTHONPATH=${PYTHONPATH}," | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
     && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && bench clear-cache \
+    && bench clear-website-cache \
     && pip cache purge \
     && npm cache clean --force \
-    && yarn cache clean \
-    && bench clear-cache \
-    && bench clear-website-cache
+    && yarn cache clean
 
 EXPOSE 3306 80
 

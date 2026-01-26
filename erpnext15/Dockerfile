@@ -206,6 +206,8 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && bench get-app --branch version-15 erpnext \
     && bench get-app --branch version-15 hrms \
     && bench get-app print_designer \
+    && bench get-app https://gitee.com/yuzelin/erpnext_chinese.git \
+    && bench get-app --branch version-15 https://gitee.com/yuzelin/erpnext_oob.git \
     && bench new-site --mariadb-root-username "root" --mariadb-root-password Pass1234 --db-password Pass1234 --admin-password admin site1.local \
     && bench config http_timeout 6000 \
     && bench config serve_default_site on \
@@ -214,6 +216,8 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && sleep 10 \
     && bench --site site1.local install-app erpnext \
     && bench --site site1.local install-app hrms \
+    && bench --site site1.local install-app erpnext_chinese \
+    && bench --site site1.local install-app erpnext_oob \
     && bench --site site1.local install-app print_designer \
     # 容器中运行fail2ban需要特权模式，这里注释掉检测及安装fail2ban的代码，否则将由于权限不足而安装失败。防火墙需要宿主机自行维护。 \
     && n=$(sed -n "/^[[:space:]]*if not which.*fail2ban-client/=" "/home/frappe/.bench/bench/config/production_setup.py") \
@@ -245,12 +249,12 @@ RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
     && echo "environment=" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
     && echo "    PYTHONPATH=${PYTHONPATH}," | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
     && echo "    PATH=/home/frappe/.local/bin:/home/frappe/.pyenv/shims:/home/frappe/.pyenv/bin:%(ENV_PATH)s" | sudo tee -a /etc/supervisor/conf.d/frappe_fix.conf \
+    && bench clear-cache \
+    && bench clear-website-cache \
     && pip cache purge \
     && pip cache purge \
     && npm cache clean --force \
-    && yarn cache clean \
-    && bench clear-cache \
-    && bench clear-website-cache
+    && yarn cache clean
 
 EXPOSE 3306 80
 
