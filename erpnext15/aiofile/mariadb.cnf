@@ -1,0 +1,9 @@
+[mysqld]
+character-set-client-handshake=FALSE
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+bind-address=0.0.0.0
+innodb_file_per_table=1
+
+[mysql]
+default-character-set=utf8mb4

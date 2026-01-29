@@ -196,7 +196,7 @@ USER frappe
 WORKDIR /home/frappe
 
 RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
-    && sleep 10 \
+    && sleep 5 \
     # 开启数据库的远程访问权限，有安全风险。请自行做好风险管控。
     && sudo mariadb -uroot -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'Pass1234';" \
     && sudo mariadb -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" \

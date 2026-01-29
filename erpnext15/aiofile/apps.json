@@ -1,0 +1,22 @@
+[
+  {
+    "url": "https://github.com/frappe/erpnext",
+    "branch": "version-15"
+  },
+  {
+    "url": "https://github.com/frappe/hrms",
+    "branch": "version-15"
+  },
+  {
+    "url": "https://github.com/frappe/print_designer",
+    "branch": "main"
+  },
+  {
+    "url": "https://gitee.com/yuzelin/erpnext_chinese.git",
+    "branch": "master"
+  },
+  {
+    "url": "https://gitee.com/yuzelin/erpnext_oob.git",
+    "branch": "version-15"
+  }
+]

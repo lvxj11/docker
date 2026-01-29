@@ -1,0 +1,215 @@
+ARG PYTHON_VERSION=3.11.14
+ARG DEBIAN_BASE=bookworm
+FROM python:${PYTHON_VERSION}-slim-${DEBIAN_BASE} AS base
+
+ARG WKHTMLTOPDF_VERSION=0.12.6.1-3
+ARG WKHTMLTOPDF_DISTRO=bookworm
+ARG NODE_VERSION=20.20.0
+ENV NVM_DIR=/home/frappe/.nvm
+ENV PATH=${NVM_DIR}/versions/node/v${NODE_VERSION}/bin/:${PATH}
+
+COPY aiofile /aiofile
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+    sudo \
+    curl \
+    git \
+    vim \
+    nginx \
+    gettext-base \
+    file \
+    # weasyprint dependencies
+    libpango-1.0-0 \
+    libharfbuzz0b \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    # For backups
+    restic \
+    gpg \
+    # MariaDB
+    mariadb-client \
+    less \
+    # Postgres
+    libpq-dev \
+    postgresql-client \
+    # For healthcheck
+    wait-for-it \
+    jq \
+    # For MIME type detection
+    media-types \
+    # AIO
+    redis-server \
+    mariadb-server \
+    supervisor \
+    # 新建用户组/用户，并赋予sudo权限
+    && groupadd -g 1000 frappe \
+    && useradd --no-log-init -r -m -s /bin/bash -u 1000 -g 1000 -G sudo frappe \
+    && echo "frappe ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+    # NodeJS
+    && mkdir -p ${NVM_DIR} \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash \
+    && . ${NVM_DIR}/nvm.sh \
+    && nvm install ${NODE_VERSION} \
+    && nvm use v${NODE_VERSION} \
+    && npm install -g yarn \
+    && nvm alias default v${NODE_VERSION} \
+    && rm -rf ${NVM_DIR}/.cache \
+    && echo 'export NVM_DIR="/home/frappe/.nvm"' >>/home/frappe/.bashrc \
+    && echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >>/home/frappe/.bashrc \
+    && echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion' >>/home/frappe/.bashrc \
+    # Install wkhtmltopdf with patched qt
+    && if [ "$(uname -m)" = "aarch64" ]; then export ARCH=arm64; fi \
+    && if [ "$(uname -m)" = "x86_64" ]; then export ARCH=amd64; fi \
+    && downloaded_file=wkhtmltox_${WKHTMLTOPDF_VERSION}.${WKHTMLTOPDF_DISTRO}_${ARCH}.deb \
+    && curl -sLO https://github.com/wkhtmltopdf/packaging/releases/download/$WKHTMLTOPDF_VERSION/$downloaded_file \
+    && apt-get install -y ./$downloaded_file \
+    && rm $downloaded_file \
+    # Clean up
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -fr /etc/nginx/sites-enabled/default \
+    && pip3 install frappe-bench \
+    # AIO
+    && mkdir -p /var/run/log \
+    && mkdir -p /run/mysqld \
+    && chown -R mysql:mysql /run/mysqld \
+    && ln -fs /aiofile/mariadb.cnf /etc/mysql/mariadb.conf.d/99-frappe.cnf \
+    && ln -fs /aiofile/sv-mariadb.conf /etc/supervisor/conf.d/mariadb.conf \
+    && /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
+    && wait-for-it -t 10 127.0.0.1:3306 \
+    && sleep 3 \
+    && mariadb -uroot -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'Pass1234';" \
+    && mariadb -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" \
+    && mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Pass1234';" \
+    && ln -fs /aiofile/nginx.conf /etc/nginx/conf.d/frappe.conf \
+    && ln -fs /aiofile/sv-nginx.conf /etc/supervisor/conf.d/nginx.conf \
+    && ln -fs /aiofile/sv-redis.conf /etc/supervisor/conf.d/redis.conf
+
+
+FROM base AS builder
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+    # For frappe framework
+    wget \
+    #for building arm64 binaries
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    # For psycopg2
+    libpq-dev \
+    # Other
+    libffi-dev \
+    liblcms2-dev \
+    libldap2-dev \
+    libmariadb-dev \
+    libsasl2-dev \
+    libtiff5-dev \
+    libwebp-dev \
+    pkg-config \
+    redis-tools \
+    rlwrap \
+    tk8.6-dev \
+    cron \
+    # For pandas
+    gcc \
+    build-essential \
+    libbz2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# apps.json includes
+ARG APPS_JSON_BASE64
+RUN if [ -n "${APPS_JSON_BASE64}" ]; then \
+    mkdir /opt/frappe && echo "${APPS_JSON_BASE64}" | base64 -d > /opt/frappe/apps.json; \
+    fi
+
+USER frappe
+
+ARG FRAPPE_BRANCH=version-15
+ARG FRAPPE_PATH=https://github.com/frappe/frappe
+RUN export APP_INSTALL_ARGS="" \
+    && if [ -n "${APPS_JSON_BASE64}" ]; then \
+        export APP_INSTALL_ARGS="--apps_path=/opt/frappe/apps.json"; \
+        fi \
+    && bench init ${APP_INSTALL_ARGS}\
+        --frappe-branch=${FRAPPE_BRANCH} \
+        --frappe-path=${FRAPPE_PATH} \
+        --no-procfile \
+        --no-backups \
+        --skip-redis-config-generation \
+        --verbose \
+        /home/frappe/frappe-bench \
+    && sudo chown -R frappe:frappe /home/frappe/frappe-bench \
+    && sudo chmod -R 755 /home/frappe/frappe-bench \
+    && cd /home/frappe/frappe-bench \
+    && echo "{}" > sites/common_site_config.json \
+    && mkdir -p /home/frappe/frappe-bench/config/ \
+    && ln -fs /aiofile/redis_queue.conf /home/frappe/frappe-bench/config/redis_queue.conf \
+    && touch /home/frappe/frappe-bench/config/redis_queue.acl \
+    && ln -fs /aiofile/redis_cache.conf /home/frappe/frappe-bench/config/redis_cache.conf \
+    && touch /home/frappe/frappe-bench/config/redis_cache.acl \
+    && sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
+    && ls -1 apps > sites/apps.txt \
+    && bench set-config -g db_host "127.0.0.1" \
+    && bench set-config -gp db_port "3306" \
+    && bench set-config -g redis_cache "redis://127.0.0.1:13000" \
+    && bench set-config -g redis_queue "redis://127.0.0.1:11000" \
+    && bench set-config -g redis_socketio "redis://127.0.0.1:13000" \
+    && bench set-config -gp socketio_port "9000" \
+    && wait-for-it -t 10 127.0.0.1:3306 \
+    && wait-for-it -t 10 127.0.0.1:11000 \
+    && wait-for-it -t 10 127.0.0.1:13000 \
+    && sleep 3 \
+    && bench new-site --mariadb-root-username "root" --mariadb-root-password Pass1234 --db-password Pass1234 --admin-password admin site1.local \
+    && bench config http_timeout 6000 \
+    && bench config serve_default_site on \
+    && bench use site1.local \
+    && bench --site site1.local install-app erpnext \
+    && bench --site site1.local install-app hrms \
+    && bench --site site1.local install-app erpnext_chinese \
+    && bench --site site1.local install-app erpnext_oob \
+    && bench --site site1.local install-app print_designer \
+    && find apps -mindepth 1 -name ".git" -prune -exec rm -rf {} + \
+    && find . -name "*.pyc" -delete \
+    && find . -name "__pycache__" -prune -exec rm -rf {} + \
+    && pip cache purge \
+    && npm cache clean --force \
+    && yarn cache clean
+
+FROM base AS erpnext_aio
+
+USER frappe
+
+RUN sudo ln -fs /aiofile/sv-frappe.conf /etc/supervisor/conf.d/frappe.conf \
+    && sudo rm -rf /var/lib/mysql
+
+COPY --from=builder --chown=mysql:mysql /var/lib/mysql /var/lib/mysql
+COPY --from=builder --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+
+WORKDIR /home/frappe/frappe-bench
+
+VOLUME [ \
+    "/home/frappe/frappe-bench/sites", \
+    "/var/lib/mysql", \
+    "/home/frappe/frappe-bench/logs" \
+    ]
+
+EXPOSE 3306 80
+
+STOPSIGNAL SIGTERM
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["sudo /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf"]
+
+FROM erpnext_aio AS test
+
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+
+RUN sudo /usr/bin/supervisord -c /etc/supervisor/supervisord.conf \
+    && sleep 10 \
+    && ps aux \
+    && sudo /usr/bin/supervisorctl status \
+    && bench version
