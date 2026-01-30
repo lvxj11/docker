@@ -7,23 +7,41 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
+    # 必须添加 permissions 权限，否则 GITHUB_TOKEN 无法推送镜像
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push to GHCR
       working-directory: ./erpnext15
       run: |
-        # 1. 先生成变量
+        # 1. 生成变量
         APPS_JSON_BASE64=$(base64 -w 0 ./aiofile/apps.json)
         
-        # 2. 执行构建
+        # 2. 定义镜像名称（强制小写，GitHub 要求镜像名必须小写）
+        # 格式为 ghcr.io/用户名/项目名:标签
+        IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/erpnext:v15
+        IMAGE_NAME=$(echo $IMAGE_NAME | tr '[:upper:]' '[:lower:]')
+        
+        # 3. 构建
         docker build . \
           --file Containerfile-aio \
           --build-arg APPS_JSON_BASE64=$APPS_JSON_BASE64 \
-          --tag lvxj11/erpnext:v15 \
+          --tag $IMAGE_NAME \
           --target erpnext_aio \
           --progress plain
+        
+        # 4. 推送到 GHCR
+        docker push $IMAGE_NAME
