@@ -15,12 +15,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
+      working-directory: ./erpnext15
       run: |
         # 1. 先生成变量
-        APPS_JSON_BASE64=$(base64 -w 0 ./erpnext15/aiofile/apps.json)
+        APPS_JSON_BASE64=$(base64 -w 0 ./aiofile/apps.json)
         
         # 2. 执行构建
-        docker build ./erpnext15 \
+        docker build . \
           --file Containerfile-aio \
           --build-arg APPS_JSON_BASE64=$APPS_JSON_BASE64 \
           --tag lvxj11/erpnext:v15 \
