@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: export APPS_JSON_BASE64=$(base64 -w 0 ./erpnext15/aiofile/apps.json) \
+        && docker build ./erpnext15 \
+          --file Containerfile-aio  \
+          --build-arg=APPS_JSON_BASE64=${APPS_JSON_BASE64} \
+          --tag=lvxj11/erpnext:v15 \
+          --target=erpnext_aio \
+          --progress=plain \
+          --file=Containerfile-aio
