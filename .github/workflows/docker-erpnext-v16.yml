@@ -1,4 +1,4 @@
-name: Docker Image CI for ERPNext v15
+name: Docker Image CI for ERPNext v16
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push to GHCR
-      working-directory: ./erpnext15
+      working-directory: ./erpnext16
       run: |
         # 1. 生成变量
         APPS_JSON_BASE64=$(base64 -w 0 ./aiofile/apps.json)

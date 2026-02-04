@@ -1,12 +1,12 @@
-name: Sync ERPNext v15 Image to Docker Hub
+name: Sync ERPNext v16 Image to Docker Hub
 
 on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: '请输入新的小版本号 (例如: 15.95.2)'
+        description: '请输入新的小版本号 (例如: 16.3.0)'
         required: true
-        default: '15.95.2'
+        default: '16.0.0'
 
 jobs:
   sync:
@@ -28,7 +28,7 @@ jobs:
       - name: Pull, Tag and Push
         run: |
           # 1. 基础镜像名 (源)
-          SRC="ghcr.io/${{ github.repository_owner }}/erpnext:v15"
+          SRC="ghcr.io/${{ github.repository_owner }}/erpnext:v16"
           SRC=$(echo "$SRC" | tr '[:upper:]' '[:lower:]')
           
           # 2. 从手动输入中获取新版本号
@@ -40,8 +40,8 @@ jobs:
           
           echo "正在打新标签: $DEST"
           docker tag $SRC $DEST
-          docker tag $SRC lvxj11/erpnext:v15
+          docker tag $SRC lvxj11/erpnext:v16
           
           echo "推送中..."
           docker push $DEST
-          docker push lvxj11/erpnext:v15
+          docker push lvxj11/erpnext:v16
