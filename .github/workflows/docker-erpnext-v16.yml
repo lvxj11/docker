@@ -29,7 +29,7 @@ jobs:
         
         # 2. 定义镜像名称（强制小写，GitHub 要求镜像名必须小写）
         # 格式为 ghcr.io/用户名/项目名:标签
-        IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/erpnext:v15
+        IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/erpnext:v16
         IMAGE_NAME=$(echo $IMAGE_NAME | tr '[:upper:]' '[:lower:]')
         
         # 3. 构建
