@@ -1,1 +1,68 @@
-/.idea/
+# IDE/编辑器相关
+/.idea/          # JetBrains IDE 配置
+/.vscode/        # VS Code 配置
+/.vscode/*       # VS Code 临时文件
+!.vscode/extensions.json  # 保留扩展配置
+/.sublime-*      # Sublime Text 配置
+/project.settings # Eclipse 配置
+/.classpath      # Eclipse 配置
+/.project        # Eclipse 配置
+/.settings/      # Eclipse 配置
+
+# Docker 相关
+/docker-compose.override.yml  # 本地开发覆盖文件
+/docker-compose.local.yml     # 本地开发配置文件
+/docker-compose.ci.yml        # CI 环境配置文件
+/.docker.env                  # Docker 环境变量文件
+/Dockerfile.local             # 本地开发 Dockerfile
+/docker-build-*               # 构建过程中的临时文件
+/docker-volumes/              # 本地 Docker 卷数据
+
+# 日志文件
+/logs/           # 日志目录
+/log/            # 日志目录
+*.log            # 日志文件
+*.log.*          # 轮转的日志文件
+/var/log/        # 系统日志目录
+
+# 临时文件
+/tmp/            # 临时目录
+/temp/           # 临时目录
+*.tmp            # 临时文件
+*.temp           # 临时文件
+
+# 本地开发环境
+/.env            # 环境变量文件
+/.env.local      # 本地环境变量文件
+/.env.development # 开发环境变量文件
+/node_modules/   # Node.js 依赖
+/vendor/         # PHP 依赖
+/venv/           # Python 虚拟环境
+/env/            # Python 虚拟环境
+/.venv/          # Python 虚拟环境
+/build/          # 构建输出目录
+/dist/           # 分发目录
+
+# 敏感信息
+/secrets/        # 密钥目录
+/private/        # 私有文件目录
+*.pem            # 密钥文件
+*.key            # 密钥文件
+*.crt            # 证书文件
+*.pfx            # 证书文件
+*.p12            # 证书文件
+*.jks            # Java 密钥库文件
+/id_rsa          # SSH 私钥
+/id_dsa          # SSH 私钥
+/id_ed25519      # SSH 私钥
+/id_ecdsa        # SSH 私钥
+
+# 操作系统生成
+/.DS_Store       # macOS 生成
+/Thumbs.db       # Windows 生成
+/ehthumbs.db     # Windows 生成
+/Desktop.ini     # Windows 生成
+/._*             # macOS 生成
+/Spotlight-V100/ # macOS 生成
+/TemporaryItems/ # macOS 生成
+/Trashes/        # macOS 生成
