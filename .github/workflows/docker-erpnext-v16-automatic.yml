@@ -1,0 +1,71 @@
+name: Automatic ERPNext v16 Image Build and Push
+
+on:
+  # 保留手动执行能力
+  workflow_dispatch:
+  # 当目标库发布新的Releases时激活
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Get latest v16 release version
+      id: get_version
+      run: |
+        # 如果是Release触发，使用Release的tag名称并检查是否为v16版本
+        if [ "${{ github.event_name }}" == "release" ]; then
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          # 检查是否为v16版本
+          if [[ "$RELEASE_TAG" == v16* || "$RELEASE_TAG" == 16.* ]]; then
+            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "IS_V16=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "IS_V16=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          # 手动触发时，自动检测最新的v16发布版本号
+          # 这里假设目标库是 frappe/erpnext，你可以根据实际情况修改
+          # 获取所有发布版本，过滤出v16版本，按版本号排序，取最新的
+          LATEST_V16_RELEASE=$(curl -s https://api.github.com/repos/frappe/erpnext/releases | jq -r '.[] | select(.tag_name | test("^v?16\\.")) | .tag_name' | sort -V -r | head -1)
+          echo "VERSION=$LATEST_V16_RELEASE" >> $GITHUB_OUTPUT
+          echo "IS_V16=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Build and push to Docker Hub
+      if: steps.get_version.outputs.IS_V16 == 'true'
+      working-directory: ./erpnext16
+      run: |
+        # 1. 生成变量
+        APPS_JSON_BASE64=$(base64 -w 0 ./aiofile/apps.json)
+        
+        # 2. 获取版本号
+        NEW_TAG="${{ steps.get_version.outputs.VERSION }}"
+        
+        # 3. 定义镜像名称
+        IMAGE_NAME="lvxj11/erpnext:${NEW_TAG}"
+        
+        # 4. 构建
+        docker build . \
+          --file Containerfile-aio \
+          --build-arg APPS_JSON_BASE64=$APPS_JSON_BASE64 \
+          --tag $IMAGE_NAME \
+          --tag lvxj11/erpnext:v16 \
+          --target erpnext_aio \
+          --progress plain
+        
+        # 5. 推送到 Docker Hub
+        echo "推送中..."
+        docker push $IMAGE_NAME
+        docker push lvxj11/erpnext:v16
