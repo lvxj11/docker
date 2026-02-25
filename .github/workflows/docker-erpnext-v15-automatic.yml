@@ -20,20 +20,31 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    - name: Get latest release version
+    - name: Get latest v15 release version
       id: get_version
       run: |
-        # 如果是Release触发，使用Release的tag名称
+        # 如果是Release触发，使用Release的tag名称并检查是否为v15版本
         if [ "${{ github.event_name }}" == "release" ]; then
-          echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          # 检查是否为v15版本
+          if [[ "$RELEASE_TAG" == v15* || "$RELEASE_TAG" == 15.* ]]; then
+            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "IS_V15=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "IS_V15=false" >> $GITHUB_OUTPUT
+          fi
         else
-          # 手动触发时，自动检测最新的发布版本号
+          # 手动触发时，自动检测最新的v15发布版本号
           # 这里假设目标库是 frappe/erpnext，你可以根据实际情况修改
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/frappe/erpnext/releases/latest | jq -r '.tag_name')
-          echo "VERSION=$LATEST_RELEASE" >> $GITHUB_OUTPUT
+          # 获取所有发布版本，过滤出v15版本，按版本号排序，取最新的
+          LATEST_V15_RELEASE=$(curl -s https://api.github.com/repos/frappe/erpnext/releases | jq -r '.[] | select(.tag_name | test("^v?15\\.")) | .tag_name' | sort -V -r | head -1)
+          echo "VERSION=$LATEST_V15_RELEASE" >> $GITHUB_OUTPUT
+          echo "IS_V15=true" >> $GITHUB_OUTPUT
         fi
 
     - name: Build and push to Docker Hub
+      if: steps.get_version.outputs.IS_V15 == 'true'
       working-directory: ./erpnext15
       run: |
         # 1. 生成变量
