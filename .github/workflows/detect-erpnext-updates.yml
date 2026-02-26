@@ -22,16 +22,16 @@ jobs:
       - name: Check for version updates
         run: |
           # 获取所有发行版列表（只执行一次）
-          ALL_RELEASES=$(curl -s https://api.github.com/repos/frappe/erpnext/releases)
+          curl -s https://api.github.com/repos/frappe/erpnext/releases > releases.json
           
           # 定义需要监控的版本
-          VERSIONS=(["15" "build_erpnext_v15"] ["16" "build_erpnext_v16"])
+          VERSIONS=("15 build_erpnext_v15" "16 build_erpnext_v16")
           
           for version_info in "${VERSIONS[@]}"; do
             IFS=' ' read -r VERSION EVENT_TYPE <<< "$version_info"
             
-            # 从已获取的列表中过滤出对应版本
-            LATEST_RELEASE=$(echo "$ALL_RELEASES" | jq -r --arg version "$VERSION" '.[] | select(.tag_name | startswith("v" + $version + ".") or startswith($version + ".")) | .tag_name' | sort -V -r | head -1)
+            # 从文件中读取数据进行 jq 解析，避免变量传递问题
+            LATEST_RELEASE=$(jq -r ".[] | select(.tag_name | test(\"^v?$VERSION\\.\")) | .tag_name" releases.json | sort -V -r | head -1)
             
             # 读取缓存的版本号
             CACHED_VERSION=$(cat .version_cache_$VERSION 2>/dev/null || echo "")
