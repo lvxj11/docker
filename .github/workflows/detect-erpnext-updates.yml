@@ -31,7 +31,7 @@ jobs:
             IFS=' ' read -r VERSION EVENT_TYPE <<< "$version_info"
             
             # 从文件中读取数据进行 jq 解析，避免变量传递问题
-            LATEST_RELEASE=$(jq -r ".[] | select(.tag_name | test(\"^v?$VERSION\\.\")) | .tag_name" releases.json | sort -V -r | head -1)
+            LATEST_RELEASE=$(jq -r --arg version "$VERSION" '.[] | select(.tag_name | test("^v?" + $version + "\\.")) | .tag_name' releases.json | sort -V -r | head -1)
             
             # 读取缓存的版本号
             CACHED_VERSION=$(cat .version_cache_$VERSION 2>/dev/null || echo "")
