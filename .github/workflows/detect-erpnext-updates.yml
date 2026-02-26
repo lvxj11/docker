@@ -1,0 +1,48 @@
+name: Detect ERPNext Version Updates
+
+on:
+  # 定期检查官方仓库的新版本（每天执行一次）
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 00:00 执行
+  # 保留手动执行能力
+  workflow_dispatch:
+
+jobs:
+  detect-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for version updates
+        run: |
+          # 获取所有发行版列表（只执行一次）
+          ALL_RELEASES=$(curl -s https://api.github.com/repos/frappe/erpnext/releases)
+          
+          # 定义需要监控的版本
+          VERSIONS=(["15" "build_erpnext_v15"] ["16" "build_erpnext_v16"])
+          
+          for version_info in "${VERSIONS[@]}"; do
+            IFS=' ' read -r VERSION EVENT_TYPE <<< "$version_info"
+            
+            # 从已获取的列表中过滤出对应版本
+            LATEST_RELEASE=$(echo "$ALL_RELEASES" | jq -r ".[] | select(.tag_name | test(\"^v?$VERSION\\.\")) | .tag_name" | sort -V -r | head -1)
+            
+            # 读取缓存的版本号
+            CACHED_VERSION=$(cat .version_cache_$VERSION 2>/dev/null || echo "")
+            
+            # 比较版本
+            if [ "$LATEST_RELEASE" != "$CACHED_VERSION" ] && [ -n "$LATEST_RELEASE" ]; then
+              echo "发现新版本: $LATEST_RELEASE (旧版本: $CACHED_VERSION)"
+              
+              # 触发构建工作流
+              curl -X POST "https://api.github.com/repos/${{ github.repository }}/dispatches" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -d "{\"event_type\": \"$EVENT_TYPE\", \"client_payload\": {\"version\": \"$LATEST_RELEASE\"}}"
+              
+              # 更新缓存
+              echo "$LATEST_RELEASE" > .version_cache_$VERSION
+            else
+              echo "版本未更新: $LATEST_RELEASE"
+            fi
+          done

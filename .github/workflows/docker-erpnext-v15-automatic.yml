@@ -3,9 +3,9 @@ name: Automatic ERPNext v15 Image Build and Push
 on:
   # 保留手动执行能力
   workflow_dispatch:
-  # 当目标库发布新的Releases时激活
-  release:
-    types: [published]
+  # 监听来自检测工作流的事件
+  repository_dispatch:
+    types: [build_erpnext_v15]  # 事件类型，对应检测工作流中的配置
 
 jobs:
   build-and-push:
@@ -20,27 +20,27 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    - name: Get latest v15 release version
+    - name: Get version
       id: get_version
       run: |
-        # 如果是Release触发，使用Release的tag名称并检查是否为v15版本
-        if [ "${{ github.event_name }}" == "release" ]; then
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
-          # 检查是否为v15版本
-          if [[ "$RELEASE_TAG" == v15* || "$RELEASE_TAG" == 15.* ]]; then
-            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
-            echo "IS_V15=true" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
-            echo "IS_V15=false" >> $GITHUB_OUTPUT
-          fi
-        else
-          # 手动触发时，自动检测最新的v15发布版本号
-          # 这里假设目标库是 frappe/erpnext，你可以根据实际情况修改
-          # 获取所有发布版本，过滤出v15版本，按版本号排序，取最新的
-          LATEST_V15_RELEASE=$(curl -s https://api.github.com/repos/frappe/erpnext/releases | jq -r '.[] | select(.tag_name | test("^v?15\\.")) | .tag_name' | sort -V -r | head -1)
-          echo "VERSION=$LATEST_V15_RELEASE" >> $GITHUB_OUTPUT
+        # 如果是repository_dispatch事件触发，使用事件payload中的版本号
+        if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+          VERSION="${{ github.event.client_payload.version }}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "IS_V15=true" >> $GITHUB_OUTPUT
+        else
+          # 手动触发时，获取最新的v15版本
+          LATEST_V15_RELEASE=$(curl -s https://api.github.com/repos/frappe/erpnext/releases | jq -r '.[] | select(.tag_name | test("^v?15\\.")) | .tag_name' | sort -V -r | head -1)
+          
+          # 检查是否获取到了版本号
+          if [ -z "$LATEST_V15_RELEASE" ]; then
+            echo "VERSION=unknown" >> $GITHUB_OUTPUT
+            echo "IS_V15=false" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$LATEST_V15_RELEASE" >> $GITHUB_OUTPUT
+            echo "IS_V15=true" >> $GITHUB_OUTPUT
+            echo "获取到的最新v15版本: $LATEST_V15_RELEASE"
+          fi
         fi
 
     - name: Build and push to Docker Hub
