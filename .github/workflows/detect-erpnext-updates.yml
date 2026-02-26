@@ -31,7 +31,7 @@ jobs:
             IFS=' ' read -r VERSION EVENT_TYPE <<< "$version_info"
             
             # 从已获取的列表中过滤出对应版本
-            LATEST_RELEASE=$(echo "$ALL_RELEASES" | jq -r '.[] | select(.tag_name | test("^v?'"$VERSION"'")) | .tag_name' | sort -V -r | head -1)
+            LATEST_RELEASE=$(echo "$ALL_RELEASES" | jq -r --arg version "$VERSION" '.[] | select(.tag_name | startswith("v" + $version + ".") or startswith($version + ".")) | .tag_name' | sort -V -r | head -1)
             
             # 读取缓存的版本号
             CACHED_VERSION=$(cat .version_cache_$VERSION 2>/dev/null || echo "")
