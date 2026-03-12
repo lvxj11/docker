@@ -12,17 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Log in to Docker Hub
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    - name: Get version
+    - name: Get version and prepare build args
       id: get_version
       run: |
+        # 生成 APPS_JSON_BASE64
+        APPS_JSON_BASE64=$(base64 -w 0 ./erpnext16/aiofile/apps.json)
+        echo "APPS_JSON_BASE64=$APPS_JSON_BASE64" >> $GITHUB_OUTPUT
+        
         # 如果是repository_dispatch事件触发，使用事件payload中的版本号
         if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
           VERSION="${{ github.event.client_payload.version }}"
@@ -46,27 +50,14 @@ jobs:
 
     - name: Build and push to Docker Hub
       if: steps.get_version.outputs.IS_V16 == 'true'
-      working-directory: ./erpnext16
-      run: |
-        # 1. 生成变量
-        APPS_JSON_BASE64=$(base64 -w 0 ./aiofile/apps.json)
-        
-        # 2. 获取版本号
-        NEW_TAG="${{ steps.get_version.outputs.VERSION }}"
-        
-        # 3. 定义镜像名称
-        IMAGE_NAME="lvxj11/erpnext:${NEW_TAG}"
-        
-        # 4. 构建
-        docker build . \
-          --file Containerfile-aio \
-          --build-arg APPS_JSON_BASE64=$APPS_JSON_BASE64 \
-          --tag $IMAGE_NAME \
-          --tag lvxj11/erpnext:v16 \
-          --target erpnext_aio \
-          --progress plain
-        
-        # 5. 推送到 Docker Hub
-        echo "推送中..."
-        docker push $IMAGE_NAME
-        docker push lvxj11/erpnext:v16
+      uses: docker/build-push-action@v7
+      with:
+        context: ./erpnext16
+        file: ./erpnext16/Containerfile-aio
+        push: true
+        tags: |
+          lvxj11/erpnext:${{ steps.get_version.outputs.VERSION }}
+          lvxj11/erpnext:v16
+        build-args:
+          APPS_JSON_BASE64: ${{ steps.get_version.outputs.APPS_JSON_BASE64 }}
+        target: erpnext_aio
