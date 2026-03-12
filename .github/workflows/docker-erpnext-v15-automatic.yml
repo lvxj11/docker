@@ -56,5 +56,5 @@ jobs:
         push: true
         tags: lvxj11/erpnext:${{ steps.get_version.outputs.VERSION }},lvxj11/erpnext:v15
         build-args:
-          APPS_JSON_BASE64: ${{ steps.get_version.outputs.APPS_JSON_BASE64 }}
+          - APPS_JSON_BASE64=${{ steps.get_version.outputs.APPS_JSON_BASE64 }}
         target: erpnext_aio
