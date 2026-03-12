@@ -54,9 +54,9 @@ jobs:
         context: ./erpnext15
         file: ./erpnext15/Containerfile-aio
         push: true
-        tags: |
-          lvxj11/erpnext:${{ steps.get_version.outputs.VERSION }}
-          lvxj11/erpnext:v15
+        tags:
+          - lvxj11/erpnext:${{ steps.get_version.outputs.VERSION }}
+          - lvxj11/erpnext:v15
         build-args:
           APPS_JSON_BASE64: ${{ steps.get_version.outputs.APPS_JSON_BASE64 }}
         target: erpnext_aio
